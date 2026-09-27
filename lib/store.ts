@@ -6,17 +6,24 @@ import type { Enquiry, EnquiryInput } from "./validation";
 
 const url = process.env.LIBSQL_DATABASE_URL ?? "file:./data/enquiries.db";
 
-if (url.startsWith("file:")) {
-  if (process.env.VERCEL) {
-    throw new Error("Set LIBSQL_DATABASE_URL to a persistent remote database before deploying.");
+function assertConfigured() {
+  if (url.startsWith("file:") && process.env.VERCEL) {
+    throw new Error(
+      "Set LIBSQL_DATABASE_URL to a persistent remote database before deploying. " +
+        "Local file storage is not available on hosted serverless runtimes."
+    );
   }
-  fs.mkdirSync(path.join(process.cwd(), "data"), { recursive: true });
+}
+
+if (!url.startsWith("file:") || !process.env.VERCEL) {
+  if (url.startsWith("file:")) fs.mkdirSync(path.join(process.cwd(), "data"), { recursive: true });
 }
 
 const db = createClient({ url, authToken: process.env.LIBSQL_AUTH_TOKEN });
 let ready: Promise<unknown> | undefined;
 
 function ensureSchema() {
+  assertConfigured();
   ready ??= db.execute(`
     CREATE TABLE IF NOT EXISTS enquiries (
       id TEXT PRIMARY KEY,
