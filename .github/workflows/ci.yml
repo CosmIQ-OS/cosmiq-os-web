@@ -31,3 +31,21 @@ jobs:
 
       - name: E2E tests (desktop + mobile)
         run: npm run test:e2e
+
+  deploy:
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Link Vercel project
+        run: npx -y vercel@latest link --yes --project cosmiq-os --scope rinshids-projects-c8c627ca --token ${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy to production
+        run: npx -y vercel@latest deploy --prod --token ${{ secrets.VERCEL_TOKEN }}
