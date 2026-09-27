@@ -10,3 +10,5 @@ playwright-report
 server.log
 server.err.log
 *.tsbuildinfo
+
+.vercel
