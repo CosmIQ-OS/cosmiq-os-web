@@ -63,7 +63,7 @@ export default function StaffEnquiries() {
   return (
     <section className="section">
       <div className="wrap">
-        <p className="kicker">Staff only</p>
+        <p className="kicker"><span>Staff</span>Internal</p>
         <h2>Enquiries</h2>
         {status === "loading" && <p className="lede">Loading…</p>}
         {status === "login" && (
@@ -73,18 +73,18 @@ export default function StaffEnquiries() {
                 autoComplete="current-password" required />
             </label>
             <button className="btn" type="submit">Sign in →</button>
-            {error && <p className="formmsg darkmsg err" role="alert">{error}</p>}
+            {error && <p className="formmsg err" role="alert">{error}</p>}
           </form>
         )}
         {status === "ready" && (
           <>
             <p className="lede">{rows.length} enquiries</p>
-            <div className="hero-btns" style={{ justifyContent: "flex-start" }}>
+            <div className="hero-btns" style={{ margin: "0 0 24px" }}>
               <button className="btn btn-sm ghost" type="button" onClick={csv}>Export CSV</button>
               <button className="btn btn-sm ghost" type="button" onClick={logout}>Sign out</button>
             </div>
             <div style={{ overflowX: "auto" }}>
-              <table className="t"><thead><tr><th>When</th><th>Name</th><th>Role</th><th>Domain</th><th>Email</th><th>Phone</th><th>Automations</th><th>Notes</th></tr></thead>
+              <table className="t"><thead><tr><th>When</th><th>Name</th><th>Role</th><th>Lab / org</th><th>Email</th><th>Phone</th><th>Automations</th><th>Notes</th></tr></thead>
                 <tbody>{rows.map((row) => (
                   <tr key={row.id}><td>{row.createdAt.slice(0, 16).replace("T", " ")}</td>
                     <td>{row.name}</td><td>{row.role}</td><td>{row.domain}</td><td>{row.email}</td>
