@@ -1,11 +1,20 @@
 export default function Privacy() {
   return (
-    <section className="section light">
+    <section className="section">
       <div className="wrap">
-        <p className="kicker">Privacy</p>
-        <h2>How we handle enquiries.</h2>
-        <p className="lede">We collect your contact details and automation interests to respond to your pilot request. Enquiries are stored in a database available to authorised staff, not on the public website.</p>
-        <p className="tiny">Customer workspaces (future): each business&apos;s documents and tasks are isolated to that business. Agent actions that contact people or change external systems require approval and are logged.</p>
+        <p className="kicker"><span>Privacy</span>How we handle data</p>
+        <h2>Privacy note.</h2>
+        <div className="prose">
+          <h3>Pilot enquiries on this website</h3>
+          <p>We collect your contact details and the areas you want automated so we can respond to your pilot request. Enquiries are stored in a database available only to authorised staff, not on the public website.</p>
+          <h3>Lab pilots</h3>
+          <ul>
+            <li>Each lab&apos;s data is isolated to that lab.</li>
+            <li>We access only the LIMS data the agreed pilot needs, such as services, prices, customers and orders.</li>
+            <li>Customer conversations are handled under the lab&apos;s own privacy policy.</li>
+            <li>Marketing messages are never sent without administrator approval. Agent actions are logged.</li>
+          </ul>
+        </div>
       </div>
     </section>
   );
