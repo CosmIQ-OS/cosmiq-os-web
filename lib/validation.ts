@@ -1,9 +1,9 @@
 export const AUTOMATION_OPTIONS = [
-  "Documentation",
-  "Internal operations",
-  "Customer support",
-  "Meetings and Schedules",
-  "Inter team communications",
+  "WhatsApp enquiries",
+  "Quotations",
+  "Customer marketing",
+  "LIMS order entry",
+  "Sample status updates",
   "All of the above",
 ] as const;
 
@@ -54,7 +54,7 @@ export function validateEnquiry(body: unknown): { ok: true; value: EnquiryInput 
   if (name.length > 160 || domain.length > 160 || email.length > 254) {
     return { ok: false, error: "A field is too long." };
   }
-  if (!domain) return { ok: false, error: "Business domain is required." };
+  if (!domain) return { ok: false, error: "Lab / organisation is required." };
   if (!EMAIL_RE.test(email)) return { ok: false, error: "A valid Email ID is required." };
   if (expanded.length === 0) return { ok: false, error: "Pick at least one automation." };
   return { ok: true, value: { name, role, domain, email, phone, automations: expanded, notes } };
