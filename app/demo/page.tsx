@@ -1,10 +1,17 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Demo: WhatsApp enquiry to quotation",
+  description: "A storyboard of the CosmIQ Enquiry & Quotation Agent: a customer chat, LIMS checks, and a quotation built from your fixed template.",
+};
+
 export default function Demo() {
   return (
     <>
       <section className="section page-head">
         <div className="wrap">
           <p className="kicker"><span>Demo</span>Prototype walkthrough</p>
-          <h2>Watch an enquiry become a quotation.</h2>
+          <h1>Watch an enquiry become a quotation.</h1>
           <p className="lede">A storyboard of the Enquiry &amp; Quotation Agent. A screen recording of the web-chat pilot will replace it once the pilot is live.</p>
           <span className="proto">Labelled prototype. Not a live customer integration; service names and figures are illustrative.</span>
         </div>

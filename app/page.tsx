@@ -24,6 +24,15 @@ const ROLES = [
   ["Quotation engine generates", "Quotations are produced from a fixed template and stored for tracking."],
 ];
 
+const FAQ = [
+  ["Can the AI quote a wrong price?", "No. Prices, tax and totals are calculated by backend business logic from your LIMS or service database. The AI only handles the conversation."],
+  ["What if a customer asks for a test we don't offer?", "The agent only offers services it finds in your LIMS, so it won't invent one. The enquiry is still saved, so your team can follow up."],
+  ["Does anything get sent without approval?", "Marketing messages never go out until an administrator approves each draft. Quotations are built from your fixed template using verified LIMS data."],
+  ["Does our team have to change how it works?", "No. Staff keep working in your LIMS. Enquiries are saved and orders are created there where needed."],
+  ["Which LIMS do you work with?", "We connect through your LIMS API and agree exactly which data (services, prices, customers, orders) the agents read and write. No API yet? Tell us; the pilot can start from your service and price database."],
+  ["What about customer data and privacy?", "Access is limited to what the pilot needs and follows your lab's privacy policy. Agent actions are logged for review."],
+];
+
 function Flow({ steps, label }: { steps: { h: string; p: string; key?: boolean }[]; label: string }) {
   return (
     <ol className="flow" aria-label={label}>
@@ -46,10 +55,10 @@ export default function Home() {
           <div>
             <span className="tag acc dot">For food &amp; testing labs</span>
             <h1>WhatsApp enquiry to quotation. <span className="hl">No guesswork.</span></h1>
-            <p className="sub">CosmIQ adds AI agents on top of your LIMS. They answer customer enquiries, build accurate quotations and draft follow-up marketing, while <b>your LIMS stays the source of truth</b> and <b>your staff approve what matters</b>.</p>
+            <p className="sub">AI agents on top of your LIMS that answer customer enquiries, prepare accurate quotations and draft follow-ups. <b>Your LIMS stays the source of truth. Your staff approve what matters.</b></p>
             <div className="hero-btns">
-              <a href="/contact" className="btn">Book a pilot →</a>
-              <a href="#workflow" className="btn ghost">See the workflow</a>
+              <a href="/contact" className="btn">Request a pilot →</a>
+              <a href="#workflow" className="btn ghost">See how it works</a>
             </div>
             <p className="hero-note">Web-chat pilot first · WhatsApp next · deeper LIMS automation after</p>
           </div>
@@ -70,6 +79,13 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <ul className="trust" aria-label="What you can rely on">
+        <li><b>₹</b>Prices &amp; services from your LIMS</li>
+        <li><b>✓</b>Every enquiry saved</li>
+        <li><b>⚑</b>Admin approves every promotion</li>
+        <li><b>◷</b>Replies any time of day</li>
+      </ul>
 
       <section className="section alt">
         <div className="wrap">
@@ -138,18 +154,45 @@ export default function Home() {
           <div className="rule-band"><p>The AI never invents services, prices, test methods, sample requirements or turnaround times.</p></div>
           <h2>Who does what.</h2>
           <p className="lede">The language model handles language. Everything that has to be correct is handled by your data and deterministic code.</p>
-          <div style={{ overflowX: "auto" }}>
-            <table className="t">
-              <thead><tr><th>Role</th><th>Responsibility</th></tr></thead>
-              <tbody>{ROLES.map(([r, d]) => <tr key={r}><td>{r}</td><td>{d}</td></tr>)}</tbody>
-            </table>
-          </div>
+          <table className="t stack">
+            <thead><tr><th>Role</th><th>Responsibility</th></tr></thead>
+            <tbody>{ROLES.map(([r, d]) => <tr key={r}><td>{r}</td><td>{d}</td></tr>)}</tbody>
+          </table>
         </div>
       </section>
 
-      <section id="pilot" className="section alt">
+      <section id="connect" className="section alt">
         <div className="wrap">
-          <p className="kicker"><span>06</span>Pilot</p>
+          <p className="kicker"><span>06</span>How it connects</p>
+          <h2>Your customers, your LIMS, one layer between.</h2>
+          <p className="lede">Nothing to replace. CosmIQ talks to customers on WhatsApp and to your LIMS through its API. Your team approves what goes out.</p>
+          <div className="connect">
+            <div className="node">
+              <span className="tag">Your customers</span>
+              <h3>WhatsApp</h3>
+              <ul><li>Ask in their own words</li><li>Answer follow-up questions</li><li>Receive quotations</li></ul>
+            </div>
+            <div className="link" aria-hidden="true"><span>⇄</span>messages</div>
+            <div className="node core">
+              <span className="tag">CosmIQ</span>
+              <h3>Agents</h3>
+              <ul><li>Understand each message</li><li>Ask only for missing details</li><li>Draft replies &amp; promotions</li></ul>
+            </div>
+            <div className="link" aria-hidden="true"><span>⇄</span>LIMS API</div>
+            <div className="node">
+              <span className="tag">Source of truth</span>
+              <h3>Your LIMS</h3>
+              <ul><li>Services &amp; parameters</li><li>Prices &amp; turnaround times</li><li>Customers &amp; orders</li></ul>
+            </div>
+          </div>
+          <div className="team-band"><strong>Your team</strong><span>approves every promotion</span><span>sees every enquiry</span><span>keeps working in your LIMS</span></div>
+          <p className="stack-line">Under the hood: Next.js · FastAPI · PostgreSQL · OpenAI / Gemini · Vercel · Railway</p>
+        </div>
+      </section>
+
+      <section id="pilot" className="section">
+        <div className="wrap">
+          <p className="kicker"><span>07</span>Pilot</p>
           <h2>Start lean. Prove it. Then scale.</h2>
           <p className="lede">We prove the full enquiry → information collection → quotation loop before touching live customer channels.</p>
           <div className="steps">
@@ -166,21 +209,22 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section">
+      <section id="faq" className="section alt">
         <div className="wrap">
-          <p className="kicker"><span>07</span>Stack</p>
-          <h2>Deliberately lean.</h2>
-          <p className="lede">A minimal, proven stack so the pilot ships quickly and scales later.</p>
-          <div className="pills">
-            <span>Next.js</span><span>FastAPI</span><span>PostgreSQL</span><span>OpenAI / Gemini</span><span>Vercel</span><span>Railway</span><span>LIMS API</span>
+          <p className="kicker"><span>08</span>FAQ</p>
+          <h2>Questions labs ask us.</h2>
+          <div className="faq-grid">
+            {FAQ.map(([q, a]) => (
+              <details key={q} className="faq"><summary>{q}</summary><p>{a}</p></details>
+            ))}
           </div>
         </div>
       </section>
 
-      <section id="contact" className="section alt">
+      <section id="contact" className="section">
         <div className="wrap cta-grid">
           <div className="aside">
-            <p className="kicker"><span>08</span>Book a pilot</p>
+            <p className="kicker"><span>09</span>Request a pilot</p>
             <h2>Put your front desk on autopilot.</h2>
             <p className="lede" style={{ marginBottom: 8 }}>Tell us about your lab. We&apos;ll reply with a pilot plan scoped to your LIMS and services.</p>
             <ol>
@@ -189,16 +233,7 @@ export default function Home() {
               <li>Web-chat pilot on your real service data.</li>
             </ol>
           </div>
-          <div>
-            <LeadForm />
-            <div className="faqs">
-              <h3>Questions</h3>
-              <details className="faq"><summary>Can the AI quote a wrong price?</summary><p>No. Prices, tax and totals are calculated by backend business logic from your LIMS or service database. The AI only handles the conversation.</p></details>
-              <details className="faq"><summary>Does anything get sent without approval?</summary><p>Marketing messages are never sent without an administrator approving each draft. Quotations are built from your fixed template using verified data.</p></details>
-              <details className="faq"><summary>Which LIMS do you work with?</summary><p>We integrate through your LIMS API. During the pilot we scope exactly which data (services, prices, customers, orders) we read and write.</p></details>
-              <details className="faq"><summary>What about customer data and privacy?</summary><p>Access is limited to what the pilot needs and follows your lab&apos;s privacy policy. Agent actions are logged for review.</p></details>
-            </div>
-          </div>
+          <LeadForm />
         </div>
       </section>
     </>
