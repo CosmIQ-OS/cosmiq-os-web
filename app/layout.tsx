@@ -1,48 +1,42 @@
 import type { Metadata } from "next";
+import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import MobileMenu from "@/components/MobileMenu";
+import { NAV, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "CosmIQ — Agentic automation for food & testing labs",
-  description:
-    "CosmIQ adds AI agents on top of your LIMS: WhatsApp enquiries turned into accurate quotations, and customer marketing your team approves. Prices and services always come from your LIMS.",
-};
+// Self-hosted at build time: no font requests from visitors' browsers to Google.
+const inter = Inter({ subsets: ["latin"], variable: "--font-body", display: "swap" });
+const grotesk = Space_Grotesk({ subsets: ["latin"], weight: ["500", "700"], variable: "--font-head", display: "swap" });
+const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-mono", display: "swap" });
 
-const NAV = [
-  { href: "/#agents", label: "Agents" },
-  { href: "/#workflow", label: "How it works" },
-  { href: "/demo", label: "Demo" },
-  { href: "/#pilot", label: "Pilot" },
-];
+export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  title: { default: `${SITE_NAME} — WhatsApp enquiry to quotation for food & testing labs`, template: `%s · ${SITE_NAME}` },
+  description: SITE_DESCRIPTION,
+  openGraph: { type: "website", siteName: SITE_NAME, locale: "en_IN", url: "/" },
+  twitter: { card: "summary_large_image" },
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@500;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html lang="en" className={`${inter.variable} ${grotesk.variable} ${mono.variable}`}>
       <body>
+        <a className="skip" href="#main">Skip to content</a>
         <header className="nav">
           <div className="wrap nav-in">
             <a className="logo" href="/"><span className="logo-mark" aria-hidden="true" />CosmIQ</a>
             <nav className="links" aria-label="Primary">
               {NAV.map((l) => <a key={l.href} href={l.href}>{l.label}</a>)}
             </nav>
-            <details className="mobile-menu">
-              <summary aria-label="Open navigation">MENU</summary>
-              <nav aria-label="Mobile">
-                {NAV.map((l) => <a key={l.href} href={l.href}>{l.label}</a>)}
-                <a href="/contact">Book a pilot</a>
-              </nav>
-            </details>
-            <a href="/contact" className="btn btn-sm nav-cta">Book a pilot →</a>
+            <div className="nav-end">
+              <a href="/contact" className="btn btn-sm nav-cta">
+                <span className="long">Request a pilot →</span><span className="short">Contact</span>
+              </a>
+              <MobileMenu links={NAV} />
+            </div>
           </div>
         </header>
-        <main>{children}</main>
+        <main id="main">{children}</main>
         <footer>
           <div className="wrap foot">
             <div>
