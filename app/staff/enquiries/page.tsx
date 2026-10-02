@@ -64,7 +64,7 @@ export default function StaffEnquiries() {
     <section className="section">
       <div className="wrap">
         <p className="kicker"><span>Staff</span>Internal</p>
-        <h2>Enquiries</h2>
+        <h1>Enquiries</h1>
         {status === "loading" && <p className="lede">Loading…</p>}
         {status === "login" && (
           <form className="form" onSubmit={login}>

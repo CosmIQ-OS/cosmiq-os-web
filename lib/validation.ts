@@ -26,7 +26,7 @@ export interface Enquiry extends EnquiryInput {
   source: string;
 }
 
-const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+export const EMAIL_RE =/^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 export function validateEnquiry(body: unknown): { ok: true; value: EnquiryInput } | { ok: false; error: string } {
   if (!body || typeof body !== "object") return { ok: false, error: "Invalid payload." };
