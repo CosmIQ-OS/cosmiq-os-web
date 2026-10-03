@@ -44,6 +44,7 @@ test("full lead journey: submit -> sign in -> stored -> sign out", async ({ page
   expect(rows.some((x: { email: string; notes: string }) => x.email === email && x.notes === "Follow up on open requests")).toBeTruthy();
 
   await page.getByRole("button", { name: /sign out/i }).click();
+  await expect(page.getByLabel("Staff password")).toBeVisible(); // sign-out request has completed
   expect((await page.request.get("/api/enquiries")).status()).toBe(401);
 });
 
