@@ -18,7 +18,10 @@ export default defineConfig({
     env: {
       STAFF_PASSWORD: "playwright-staff-password",
       STAFF_SESSION_SECRET: "playwright-session-secret-at-least-32-characters",
-      LIBSQL_DATABASE_URL: "file:./data/playwright-enquiries.db",
+      // Fresh in-memory Postgres per run; no Gemini key, so the fallback parser is exercised.
+      PGLITE_DIR: "memory://",
+      DEMO_ACCESS_CODE: "playwright-demo-code",
+      GEMINI_API_KEY: "",
     },
     timeout: 120_000,
   },
