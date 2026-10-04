@@ -7,7 +7,7 @@ import type { Awaiting, ConvState, Extraction, Intent, LabTest } from "./types";
 //   otherwise the keyword parser (note explains why). Output is sanitised: test IDs limited to the catalogue.
 // DOES NOT: decide workflow steps, prices or replies. Those stay in workflow.ts / pricing.ts.
 
-const TIMEOUT_MS = 7000;
+const TIMEOUT_MS = 5000;
 const INTENTS: Intent[] = ["enquiry", "confirm", "decline", "discount", "faster_tat", "greeting", "other"];
 
 let client: GoogleGenAI | null | undefined;
@@ -17,7 +17,7 @@ function gemini(): GoogleGenAI | null {
 }
 
 export function geminiModel(): string {
-  return process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  return process.env.GEMINI_MODEL || "gemini-3.5-flash";
 }
 
 function instructions(catalog: LabTest[], sampleTypes: string[], state: ConvState, awaiting: Awaiting) {
@@ -50,6 +50,14 @@ const SCHEMA = {
   },
   required: ["intent", "testIds", "unknownTests", "sampleType", "samples", "name", "company"],
 };
+
+function fallbackReason(error: unknown, timedOut: boolean): string {
+  if (timedOut) return `Gemini took over ${TIMEOUT_MS / 1000}s`;
+  const message = error instanceof Error ? error.message : String(error);
+  if (/\b429\b|quota|RESOURCE_EXHAUSTED/i.test(message)) return "Gemini rate limit reached";
+  if (/\b503\b|overloaded|high demand|UNAVAILABLE/i.test(message)) return "Gemini busy";
+  return "Gemini unavailable";
+}
 
 function sanitise(raw: Record<string, unknown>, catalog: LabTest[]): Omit<Extraction, "engine"> {
   const ids = new Set(catalog.map((t) => t.id));
@@ -86,8 +94,9 @@ export async function extract(text: string, ctx: { catalog: LabTest[]; sampleTyp
     const raw = JSON.parse(response.text ?? "{}") as Record<string, unknown>;
     return { ...sanitise(raw, ctx.catalog), engine: "gemini" };
   } catch (error) {
-    const reason = abort.signal.aborted ? `Gemini timed out after ${TIMEOUT_MS / 1000}s` : `Gemini error: ${error instanceof Error ? error.message.slice(0, 120) : "unknown"}`;
-    return { ...parseFallback(text, ctx.awaiting, ctx.sampleTypes), note: reason };
+    // Short, client-safe reason for the lab dashboard; the raw error goes to the server log.
+    console.error("[demo] Gemini failed, using fallback parser:", error);
+    return { ...parseFallback(text, ctx.awaiting, ctx.sampleTypes), note: fallbackReason(error, abort.signal.aborted) };
   } finally {
     clearTimeout(timer);
   }
