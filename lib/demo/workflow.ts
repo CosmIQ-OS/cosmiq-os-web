@@ -1,6 +1,7 @@
 import { inr } from "./pricing";
 import { matchSampleType } from "./sample-types";
 import type { ConvState, Draft, Extraction, LabTest, TraceEvent } from "./types";
+import { EMAIL, GSTIN, listWords, normaliseGst } from "./verify";
 
 // CONTRACT
 // GUARANTEES: decides the next step from (state, draft, extraction) alone; only catalogue tests and
@@ -23,11 +24,11 @@ export interface Step {
   chips: string[];
   flags: string[]; // reasons this conversation needs staff
   events: TraceEvent[];
-  action: null | "quote" | "order";
+  action: null | "verify" | "quote" | "order";
 }
 
 const MAX_SAMPLES = 50;
-const firstName = (name: string) => name.trim().split(/\s+/)[0];
+export const firstName = (name: string) => name.trim().split(/\s+/)[0];
 const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 export const shortTestName = (t: LabTest) =>
   t.name.replace(/\s*\(.*?\)/g, "").replace(/\s+(Analysis|Testing|Test)\b/g, "").trim();
@@ -92,24 +93,46 @@ export function nextStep(ctx: Ctx, ex: Extraction): Step {
   }
   const changed = before !== JSON.stringify([draft.testIds, draft.sampleType, draft.samples]);
 
-  // New customers introduce themselves before quoting.
+  // Every customer is verified before quoting: collect name, company, email and GST number,
+  // then hand over to the agent's database check (action "verify").
   if (state === "identify") {
-    if (draft.name && !draft.company && ex.name && !ex.company) draft.company = ex.name; // answer to "which company?"
+    const given = [ex.name, ex.company, ex.email, ex.gstNo].filter(Boolean).length;
+    if (given === 1 && ex.name && draft.name && !draft.company) draft.company = ex.name; // lone answer to "which company?"
     else {
-      draft.name ??= ex.name;
-      draft.company ??= ex.company;
+      if (ex.name) draft.name = ex.name; // later answers overwrite: customers correct themselves on re-check
+      if (ex.company) draft.company = ex.company;
     }
-    if (!draft.name || !draft.company) {
+    if (ex.email) {
+      if (EMAIL.test(ex.email)) draft.email = ex.email.toLowerCase();
+      else notes.push(`"${ex.email}" doesn't look like an email address.`);
+    }
+    if (ex.gstNo) {
+      const gst = normaliseGst(ex.gstNo);
+      if (GSTIN.test(gst)) {
+        draft.gstNo = gst;
+        draft.noGst = false;
+      } else notes.push(`"${ex.gstNo}" doesn't look like a GST number. A GSTIN has 15 characters, like 32ABCDE1234F1Z5.`);
+    }
+    if (ex.noGst && !draft.gstNo) draft.noGst = true;
+
+    const missing = [
+      !draft.name && "name", !draft.company && "company", !draft.email && "email",
+      !draft.gstNo && !draft.noGst && "GST number",
+    ].filter((f): f is string => !!f);
+    if (missing.length > 0) {
       draft.awaiting = "identity";
       return done({
-        ask: draft.name
-          ? `Thanks, ${firstName(draft.name)}! Which company or business are you with?`
-          : "Before I prepare a quotation, may I have your name and company?",
+        ask: missing.length === 4
+          ? "To verify you, please share your name, company, email and GST number."
+          : `Thanks! To finish verifying you, I still need your ${listWords(missing)}.`,
       });
     }
-    events.push({ kind: "db", label: "New customer details captured", detail: `${draft.name} · ${draft.company}` });
-    notes.push(`Thanks, ${firstName(draft.name)}!`);
-    state = "collecting";
+    events.push({
+      kind: "db", label: "Verification details received",
+      detail: `${draft.name} · ${draft.company} · ${draft.email} · ${draft.gstNo ?? "no GST registration"}`,
+    });
+    draft.awaiting = null;
+    return done({ action: "verify" });
   }
 
   if (state === "ordered") {

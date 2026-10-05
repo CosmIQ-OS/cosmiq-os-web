@@ -32,13 +32,26 @@ test("demo is locked without the access code", async ({ page, request }) => {
   await expect(page.getByRole("heading", { name: /agentic enquiry desk/i })).toBeVisible();
 });
 
-test("known customer: enquiry → quotation PDF → order, mirrored on the lab dashboard", async ({ page }) => {
+// The verification card "acts" the database check before revealing the reply (~3 s).
+const VERIFY_WAIT = { timeout: 10_000 };
+
+async function startAs(page: Page, persona: string) {
+  await page.getByLabel("Chat as customer").selectOption(persona);
+  await page.getByRole("button", { name: /start chat/i }).first().click();
+  await expect(chat(page)).toContainText("please share your name, company, email and GST number");
+}
+
+test("known customer: verified → enquiry → quotation PDF → order, mirrored on the lab dashboard", async ({ page }) => {
   await unlock(page);
   await page.getByRole("button", { name: "Reset demo" }).click();
-  await page.getByLabel("Chat as customer").selectOption("C001");
-  await page.getByRole("button", { name: /start chat/i }).first().click();
-  await expect(chat(page)).toContainText("Welcome back to FQLab");
-  await expect(lab(page)).toContainText("Customer recognised: Arun Menon (C001)");
+  await startAs(page, "C001");
+  await expect(lab(page)).toContainText("Verification in progress");
+
+  await page.getByRole("button", { name: "Send my details" }).click();
+  await expect(page.getByLabel("Customer verification").last()).toContainText("Verified", VERIFY_WAIT);
+  await expect(chat(page)).toContainText("You're verified. Welcome back, Arun!", VERIFY_WAIT);
+  await expect(lab(page)).toContainText("Customer verified: Arun Menon (C001)");
+  await expect(lab(page)).toContainText("✓ Verified");
 
   await say(page, "Need aflatoxin testing for red chilli powder");
   await expect(chat(page)).toContainText("How many samples of Red Chilli Powder");
@@ -57,14 +70,29 @@ test("known customer: enquiry → quotation PDF → order, mirrored on the lab d
   await expect(lab(page)).toContainText("Order created");
 });
 
-test("guardrails: unknown sample type and discount are declined and flagged for staff", async ({ page }) => {
+test("mismatch: re-check once, then flag staff and continue unverified", async ({ page }) => {
   await unlock(page);
-  await page.getByLabel("Chat as customer").selectOption("new");
-  await page.getByRole("button", { name: /start chat/i }).first().click();
-  await expect(chat(page)).toContainText("May I have your name and company?");
-  await say(page, "Hi, I'm Asha from Spice Route Exports");
-  await expect(chat(page)).toContainText("Thanks, Asha!");
-  await expect(lab(page)).toContainText("Spice Route Exports");
+  await startAs(page, "C002");
+  await page.getByRole("button", { name: "Send with wrong email" }).click();
+  await expect(chat(page)).toContainText("Please re-check your email address", VERIFY_WAIT);
+  await expect(lab(page)).toContainText("Details don't match record (attempt 1 of 2)");
+
+  await page.getByRole("button", { name: "Send with wrong email" }).click();
+  await expect(chat(page)).toContainText("I still can't match those details", VERIFY_WAIT);
+  await expect(lab(page)).toContainText("⚑ Unverified");
+  await expect(lab(page)).toContainText("Needs staff: customer details don't match records");
+  await expect(lab(page)).not.toContainText("previous orders"); // record history stays hidden
+
+  await say(page, "pesticide residue for turmeric, 2 samples");
+  await expect(page.getByLabel(/^Quotation Q-\d{4}-\d{4}$/).last()).toContainText("INR 10,620");
+});
+
+test("new customer is registered, and guardrails still apply", async ({ page }) => {
+  await unlock(page);
+  await startAs(page, "new");
+  await page.getByRole("button", { name: "Send my details" }).click();
+  await expect(chat(page)).toContainText("I've registered Spice Route Exports as a new customer", VERIFY_WAIT);
+  await expect(lab(page)).toContainText("New customer registered: C021");
 
   await say(page, "honey testing please");
   await expect(chat(page)).toContainText("Honey isn't on our list of accepted sample types");
@@ -74,11 +102,12 @@ test("guardrails: unknown sample type and discount are declined and flagged for 
   await expect(lab(page)).toContainText("Needs staff: discount requested");
 });
 
-test("reset clears the demo for the next rehearsal", async ({ page }) => {
+test("reset clears chats and customers registered during the demo", async ({ page }) => {
   await unlock(page);
-  await page.getByRole("button", { name: /start chat/i }).first().click();
-  await expect(chat(page)).toContainText("Welcome back");
   await page.getByRole("button", { name: "Reset demo" }).click();
   await expect(chat(page)).toContainText("Start a chat as");
   await expect(lab(page)).toContainText("Start a chat to watch the agent work");
+  await startAs(page, "new");
+  await page.getByRole("button", { name: "Send my details" }).click();
+  await expect(lab(page)).toContainText("New customer registered: C021", VERIFY_WAIT); // C021 was freed by reset
 });

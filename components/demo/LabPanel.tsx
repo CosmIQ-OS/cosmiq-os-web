@@ -3,10 +3,16 @@ import type { ConversationView } from "@/lib/demo/data";
 import { inr } from "@/lib/demo/pricing";
 
 const STAGE: Record<string, string> = {
-  identify: "Identifying customer",
+  identify: "Verifying customer",
   collecting: "Collecting details",
   quoted: "Quotation sent",
   ordered: "Order created",
+};
+const IDENTITY: Record<string, { label: string; tone: string }> = {
+  pending: { label: "Verifying…", tone: "" },
+  verified: { label: "✓ Verified", tone: "good" },
+  new: { label: "New customer", tone: "good" },
+  unverified: { label: "⚑ Unverified", tone: "flagged" },
 };
 const KIND: Record<string, string> = { ai: "AI", db: "DB", ask: "ASK", flag: "STAFF", quote: "QUOTE", order: "ORDER", info: "INFO" };
 
@@ -15,13 +21,15 @@ export default function LabPanel({ view }: { view: ConversationView | null }) {
     return (
       <aside className="lab" aria-label="Lab dashboard">
         <div className="lab-h"><b>Lab dashboard</b><span className="live">● live</span></div>
-        <p className="lab-empty">Start a chat to watch the agent work: what it read, what it checked in the lab database, and what it created.</p>
+        <p className="lab-empty">Start a chat to watch the agent work: how it verifies the customer, what it read, what it checked in the lab database, and what it created.</p>
       </aside>
     );
   }
   const { conversation, profile, events, quotations, orders } = view;
+  const { draft } = conversation;
   const lastAi = [...events].reverse().find((e) => e.kind === "ai");
   const engine = lastAi ? (lastAi.label.includes("Gemini") ? "Gemini" : "Fallback parser") : "—";
+  const identity = IDENTITY[draft.verification] ?? IDENTITY.pending;
 
   return (
     <aside className="lab" aria-label="Lab dashboard">
@@ -29,6 +37,7 @@ export default function LabPanel({ view }: { view: ConversationView | null }) {
 
       <div className="lab-status">
         <div><small>Stage</small><b>{STAGE[conversation.state] ?? conversation.state}</b></div>
+        <div className={identity.tone}><small>Customer</small><b>{identity.label}</b></div>
         <div><small>Message reader</small><b>{engine}</b></div>
         <div className={conversation.needsStaff ? "flagged" : ""}><small>Staff</small><b>{conversation.needsStaff ? "⚑ Needs staff" : "Not needed"}</b></div>
       </div>
@@ -37,19 +46,25 @@ export default function LabPanel({ view }: { view: ConversationView | null }) {
         <small>Customer</small>
         {profile ? (
           <>
-            <b>{profile.customer.name} · {profile.customer.id}</b>
-            <span>{profile.customer.company}, {profile.customer.city}</span>
-            <span className="mono">GST {profile.customer.gstNo} · {profile.customer.phone}</span>
+            <b>{profile.customer.name} · {profile.customer.id}{draft.verification === "new" && <span className="tag ok" style={{ marginLeft: 8 }}>Registered now</span>}</b>
+            <span>{[profile.customer.company, profile.customer.city].filter(Boolean).join(", ")}</span>
+            <span className="mono">{[profile.customer.gstNo && `GST ${profile.customer.gstNo}`, profile.customer.email, profile.customer.phone].filter(Boolean).join(" · ")}</span>
             <span>{profile.orders.length} previous orders · {inr(profile.orders.reduce((s, o) => s + o.totalInr, 0))} billed</span>
-            <ul>
-              {profile.orders.slice(0, 3).map((o) => <li key={o.id}><span className="mono">{o.id}</span> {o.testName} · {o.sampleType} · {o.status}</li>)}
-            </ul>
+            {profile.orders.length > 0 && (
+              <ul>
+                {profile.orders.slice(0, 3).map((o) => <li key={o.id}><span className="mono">{o.id}</span> {o.testName} · {o.sampleType} · {o.status}</li>)}
+              </ul>
+            )}
           </>
         ) : (
           <>
-            <b>{conversation.draft.name ?? "New customer"}</b>
-            <span>{conversation.draft.company ?? "Company not given yet"}</span>
-            <span className="mono">Not in customer database</span>
+            <b>{draft.verification === "unverified" ? "Unverified customer" : "Verification in progress"}</b>
+            <ul className="vfields" aria-label="Details received">
+              {([["Name", draft.name], ["Company", draft.company], ["Email", draft.email], ["GST", draft.gstNo ?? (draft.noGst ? "No GST registration" : null)]] as const).map(([k, val]) => (
+                <li key={k} className={val ? "got" : ""}><span>{val ? "✓" : "…"}</span>{k}: {val ?? "waiting"}</li>
+              ))}
+            </ul>
+            {draft.verification === "unverified" && <span className="mono">Details don't match the record on file. History hidden until staff verify.</span>}
           </>
         )}
       </div>
