@@ -42,11 +42,15 @@ export interface Extraction {
   samples: number | null;
   name: string | null;
   company: string | null;
+  email: string | null;
+  gstNo: string | null;
+  noGst: boolean; // customer says they have no GST registration
   engine: "gemini" | "fallback";
   note?: string; // e.g. why the fallback was used
 }
 
 export type ConvState = "identify" | "collecting" | "quoted" | "ordered";
+export type Verification = "pending" | "verified" | "new" | "unverified";
 export type Awaiting = "identity" | "tests" | "sampleType" | "samples" | "confirm" | null;
 
 export interface Draft {
@@ -55,6 +59,11 @@ export interface Draft {
   samples: number | null;
   name: string | null;
   company: string | null;
+  email: string | null;
+  gstNo: string | null;
+  noGst: boolean;
+  verification: Verification;
+  verifyAttempts: number;
   awaiting: Awaiting;
   quotationId: string | null;
   orderIds: string[];

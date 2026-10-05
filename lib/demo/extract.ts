@@ -16,8 +16,10 @@ function gemini(): GoogleGenAI | null {
   return client;
 }
 
-export function geminiModel(): string {
-  return process.env.GEMINI_MODEL || "gemini-3.5-flash";
+// Comma-separated, in order of preference: on a "busy" answer the next model gets one try.
+export function geminiModels(): string[] {
+  const list = (process.env.GEMINI_MODEL || "gemini-2.5-flash,gemini-3.5-flash").split(",").map((m) => m.trim()).filter(Boolean);
+  return list.length ? list : ["gemini-2.5-flash"];
 }
 
 function instructions(catalog: LabTest[], sampleTypes: string[], state: ConvState, awaiting: Awaiting) {
@@ -32,7 +34,9 @@ function instructions(catalog: LabTest[], sampleTypes: string[], state: ConvStat
     "- sampleType: the food or spice to be tested as the customer said it; use the accepted name when it clearly matches (chilli -> Red Chilli Powder, jeera -> Cumin Seeds, haldi -> Turmeric Powder). Return a non-matching food as written (e.g. 'honey'). null if not mentioned.",
     "- samples: number of samples/batches to test, if stated. Ignore weights (500 g), days and order numbers. A bare number answers 'how many samples' only when the agent asked for it. null otherwise.",
     "- intent: confirm (accepts/agrees to book), decline (not now/no), discount (asks for a lower price/discount/offer), faster_tat (asks for faster/urgent/express turnaround), greeting (only a greeting), enquiry (asks for or gives test details), other.",
-    "- name / company: only when the customer introduces themselves; otherwise null.",
+    "- name / company / email / gstNo: contact details when the customer gives them (gstNo = 15-character GSTIN as written). Otherwise null.",
+    "- noGst: true only if the customer says they have no GST registration.",
+    "- When the message is the customer's contact details, do NOT take tests or sample types from the company name (e.g. 'Rajputana Chilli Industries' is a company, not a chilli sample).",
     `Conversation state: ${state}. The agent last asked for: ${awaiting ?? "nothing specific"}.`,
   ].join("\n");
 }
@@ -47,8 +51,11 @@ const SCHEMA = {
     samples: { type: ["integer", "null"] },
     name: { type: ["string", "null"] },
     company: { type: ["string", "null"] },
+    email: { type: ["string", "null"] },
+    gstNo: { type: ["string", "null"] },
+    noGst: { type: "boolean" },
   },
-  required: ["intent", "testIds", "unknownTests", "sampleType", "samples", "name", "company"],
+  required: ["intent", "testIds", "unknownTests", "sampleType", "samples", "name", "company", "email", "gstNo", "noGst"],
 };
 
 function fallbackReason(error: unknown, timedOut: boolean): string {
@@ -71,6 +78,9 @@ function sanitise(raw: Record<string, unknown>, catalog: LabTest[]): Omit<Extrac
     samples,
     name: str(raw.name),
     company: str(raw.company),
+    email: str(raw.email),
+    gstNo: str(raw.gstNo),
+    noGst: raw.noGst === true,
   };
 }
 
@@ -79,24 +89,33 @@ export async function extract(text: string, ctx: { catalog: LabTest[]; sampleTyp
   if (!ai) return { ...parseFallback(text, ctx.awaiting, ctx.sampleTypes), note: "GEMINI_API_KEY not set" };
   const abort = new AbortController();
   const timer = setTimeout(() => abort.abort(), TIMEOUT_MS);
+  const started = Date.now();
+  const models = geminiModels();
   try {
-    const response = await ai.models.generateContent({
-      model: geminiModel(),
-      contents: text,
-      config: {
-        systemInstruction: instructions(ctx.catalog, ctx.sampleTypes, ctx.state, ctx.awaiting),
-        responseMimeType: "application/json",
-        responseJsonSchema: SCHEMA,
-        temperature: 0,
-        abortSignal: abort.signal,
-      },
-    });
-    const raw = JSON.parse(response.text ?? "{}") as Record<string, unknown>;
-    return { ...sanitise(raw, ctx.catalog), engine: "gemini" };
-  } catch (error) {
-    // Short, client-safe reason for the lab dashboard; the raw error goes to the server log.
-    console.error("[demo] Gemini failed, using fallback parser:", error);
-    return { ...parseFallback(text, ctx.awaiting, ctx.sampleTypes), note: fallbackReason(error, abort.signal.aborted) };
+    for (let attempt = 0; ; attempt++) {
+      try {
+        const response = await ai.models.generateContent({
+          model: models[Math.min(attempt, models.length - 1)],
+          contents: text,
+          config: {
+            systemInstruction: instructions(ctx.catalog, ctx.sampleTypes, ctx.state, ctx.awaiting),
+            responseMimeType: "application/json",
+            responseJsonSchema: SCHEMA,
+            temperature: 0,
+            abortSignal: abort.signal,
+          },
+        });
+        const raw = JSON.parse(response.text ?? "{}") as Record<string, unknown>;
+        return { ...sanitise(raw, ctx.catalog), engine: "gemini" };
+      } catch (error) {
+        // Overloaded models answer "busy" within a few seconds: one more try (next model if listed) while time allows.
+        const busy = fallbackReason(error, abort.signal.aborted) === "Gemini busy";
+        if (attempt === 0 && busy && Date.now() - started < 3500) continue;
+        // Short, client-safe reason for the lab dashboard; the raw error goes to the server log.
+        console.error("[demo] Gemini failed, using fallback parser:", error);
+        return { ...parseFallback(text, ctx.awaiting, ctx.sampleTypes), note: fallbackReason(error, abort.signal.aborted) };
+      }
+    }
   } finally {
     clearTimeout(timer);
   }
