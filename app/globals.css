@@ -328,7 +328,25 @@ footer { background: var(--ink); color: var(--paper); padding: 56px 0 32px; }
 .lab-h { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--ink); color: var(--paper); font-family: var(--f-mono); text-transform: uppercase; }
 .live { color: #7ee2a8; font-size: 12px; }
 .lab-empty { padding: 28px 18px; color: var(--mut); }
-.lab-status { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: var(--b); }
+.lab-status { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: var(--b); }
+.lab-status .good { background: #e3f3e8; color: var(--ok); }
+.vfields { list-style: none; display: grid; gap: 3px; margin-top: 6px; font-size: 13.5px; color: var(--mut); }
+.vfields li span { display: inline-block; width: 18px; font-weight: 700; }
+.vfields li.got { color: var(--ink); }
+.vfields li.got span { color: var(--ok); }
+.vcard { border: 2px solid var(--ink); background: var(--paper); font-family: var(--f-mono); font-size: 12px; margin-bottom: 8px; }
+.vcard-h { padding: 6px 8px; background: var(--ink); color: var(--paper); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.vcard ol { list-style: none; padding: 6px 8px; display: grid; gap: 4px; }
+.vcard li { display: flex; gap: 8px; align-items: center; }
+.vcard li span { width: 14px; text-align: center; font-weight: 700; }
+.vcard li.ok span { color: var(--ok); }
+.vcard li.bad span { color: var(--err); }
+.vcard li.checking { color: var(--mut); }
+.vcard .spin { width: 10px; height: 10px; border: 2px solid var(--mut); border-top-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.vcard-result { padding: 6px 8px; border-top: 2px solid var(--ink); font-weight: 700; }
+.v-verified .vcard-result, .v-new .vcard-result { background: #e3f3e8; color: var(--ok); }
+.v-pending .vcard-result, .v-unverified .vcard-result { background: #fde2dc; color: var(--err); }
 .lab-status > div { padding: 12px 16px; border-right: 2px solid var(--ink); display: grid; gap: 2px; }
 .lab-status > div:last-child { border-right: 0; }
 .lab-status .flagged { background: #fde2dc; color: var(--err); }
@@ -360,5 +378,5 @@ footer { background: var(--ink); color: var(--paper); padding: 56px 0 32px; }
   .lab-status > div { border-right: 0; border-bottom: 2px solid var(--ink); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .msg.typing span { animation: none; }
+  .msg.typing span, .vcard .spin { animation: none; }
 }

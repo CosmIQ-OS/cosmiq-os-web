@@ -19,6 +19,9 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS lab_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS demo_conversations (id TEXT PRIMARY KEY, customer_id TEXT, state TEXT NOT NULL, draft JSONB NOT NULL,
     needs_staff BOOLEAN NOT NULL DEFAULT false, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
+  // Added for customer verification (idempotent on databases created before it).
+  `ALTER TABLE lab_customers ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'seed'`,
+  `ALTER TABLE demo_conversations ADD COLUMN IF NOT EXISTS persona_id TEXT`,
   `CREATE TABLE IF NOT EXISTS demo_messages (id BIGSERIAL PRIMARY KEY, conversation_id TEXT NOT NULL, sender TEXT NOT NULL,
     body TEXT NOT NULL, meta JSONB, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
   `CREATE TABLE IF NOT EXISTS demo_events (id BIGSERIAL PRIMARY KEY, conversation_id TEXT NOT NULL, kind TEXT NOT NULL,
@@ -88,8 +91,32 @@ export async function listCustomers() {
   const rows = await query(`
     SELECT c.*, count(o.id)::int AS orders, coalesce(sum(o.total_inr), 0)::int AS billed
     FROM lab_customers c LEFT JOIN lab_orders o ON o.customer_id = c.id
+    WHERE c.source = 'seed'
     GROUP BY c.id ORDER BY c.id`);
   return rows.map((r) => ({ ...toCustomer(r), orders: Number(r.orders), billedInr: Number(r.billed) }));
+}
+
+export async function getCustomer(id: string): Promise<Customer | null> {
+  const [row] = await query("SELECT * FROM lab_customers WHERE id = $1", [id]);
+  return row ? toCustomer(row) : null;
+}
+
+// Verification lookup: the record matching the GST number wins over one matching only the email.
+export async function findCustomerForVerification(gstNo: string | null, email: string): Promise<Customer | null> {
+  const rows = await query(
+    `SELECT *, (upper(gst_no) = $1) AS gst_match FROM lab_customers
+     WHERE upper(gst_no) = $1 OR lower(email) = $2 ORDER BY gst_match DESC LIMIT 1`,
+    [gstNo ?? "", email.toLowerCase()],
+  );
+  return rows[0] ? toCustomer(rows[0]) : null;
+}
+
+export async function registerCustomer(c: { name: string; company: string; email: string; gstNo: string | null }): Promise<string> {
+  const n = await nextNumber("SELECT max(substring(id from 2)::int) AS n FROM lab_customers");
+  const id = `C${String(n).padStart(3, "0")}`;
+  await query(`INSERT INTO lab_customers (id, name, phone, email, gst_no, company, city, source)
+    VALUES ($1, $2, '', $3, $4, $5, '', 'demo')`, [id, c.name, c.email, c.gstNo ?? "", c.company]);
+  return id;
 }
 
 export async function getCustomerProfile(id: string): Promise<{ customer: Customer; orders: PastOrder[] } | null> {
@@ -110,16 +137,17 @@ export async function getCustomerProfile(id: string): Promise<{ customer: Custom
 
 export interface Conversation {
   id: string;
-  customerId: string | null;
+  customerId: string | null; // set once the customer is verified or registered
+  personaId: string | null; // sample customer the presenter is chatting as (drives demo shortcuts)
   state: ConvState;
   draft: Draft;
   needsStaff: boolean;
 }
 
-export async function createConversation(customerId: string | null, state: ConvState, draft: Draft): Promise<string> {
+export async function createConversation(personaId: string | null, state: ConvState, draft: Draft): Promise<string> {
   const id = crypto.randomUUID();
-  await query("INSERT INTO demo_conversations (id, customer_id, state, draft) VALUES ($1, $2, $3, $4)",
-    [id, customerId, state, JSON.stringify(draft)]);
+  await query("INSERT INTO demo_conversations (id, persona_id, state, draft) VALUES ($1, $2, $3, $4)",
+    [id, personaId, state, JSON.stringify(draft)]);
   return id;
 }
 
@@ -127,16 +155,22 @@ export async function getConversation(id: string): Promise<Conversation | null> 
   const [r] = await query("SELECT * FROM demo_conversations WHERE id = $1", [id]);
   if (!r) return null;
   const draft = typeof r.draft === "string" ? JSON.parse(r.draft) : r.draft;
-  return { id: String(r.id), customerId: r.customer_id ? String(r.customer_id) : null, state: r.state as ConvState, draft, needsStaff: Boolean(r.needs_staff) };
+  return {
+    id: String(r.id), customerId: r.customer_id ? String(r.customer_id) : null, personaId: r.persona_id ? String(r.persona_id) : null,
+    state: r.state as ConvState, draft, needsStaff: Boolean(r.needs_staff),
+  };
 }
 
-export async function saveConversation(id: string, state: ConvState, draft: Draft, needsStaff: boolean) {
-  await query("UPDATE demo_conversations SET state = $2, draft = $3, needs_staff = $4 WHERE id = $1",
-    [id, state, JSON.stringify(draft), needsStaff]);
+export async function saveConversation(id: string, state: ConvState, draft: Draft, needsStaff: boolean, customerId: string | null) {
+  await query("UPDATE demo_conversations SET state = $2, draft = $3, needs_staff = $4, customer_id = $5 WHERE id = $1",
+    [id, state, JSON.stringify(draft), needsStaff, customerId]);
 }
+
+export type Chip = string | { label: string; text: string }; // label shown, text sent
 
 export interface MessageMeta {
-  chips?: string[];
+  chips?: Chip[];
+  verification?: { steps: Array<{ label: string; ok: boolean | null }>; result: string; outcome: string };
   quote?: { id: string; totalInr: number; subtotalInr: number; gstInr: number; gstRate: number; tatDays: number;
     lines: Array<{ testName: string; sampleType: string; samples: number; feeInr: number; amountInr: number }> };
   order?: { ids: string[]; status: string };
@@ -234,6 +268,7 @@ export type ConversationView = NonNullable<Awaited<ReturnType<typeof getConversa
 
 export async function resetDemo() {
   await query("DELETE FROM lab_orders WHERE source = 'demo'");
+  await query("DELETE FROM lab_customers WHERE source = 'demo'");
   await query("DELETE FROM demo_quotations");
   await query("DELETE FROM demo_events");
   await query("DELETE FROM demo_messages");
