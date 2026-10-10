@@ -1,21 +1,27 @@
-name: CI
+name: CI/CD
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch: # "Run workflow" button: test and redeploy main by hand
+
+# Newer pushes to a PR cancel its older run; runs on main queue so deploys never overlap.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - run: npm ci
@@ -29,23 +35,45 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
+      # Uses in-memory Postgres (PGlite) and the fallback parser: no secrets needed.
       - name: E2E tests (desktop + mobile)
         run: npm run test:e2e
 
   deploy:
     needs: build-and-test
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      # IDs instead of `vercel link --scope`, so the deploy never depends on team-slug lookup.
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      SITE: https://cosmiq-os.vercel.app
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
-
-      - name: Link Vercel project
-        run: npx -y vercel@latest link --yes --project cosmiq-os --scope rinshids-projects-c8c627ca --token ${{ secrets.VERCEL_TOKEN }}
+          node-version: 24
 
       - name: Deploy to production
-        run: npx -y vercel@latest deploy --prod --token ${{ secrets.VERCEL_TOKEN }}
+        run: npx -y vercel@latest deploy --prod --yes --token "$VERCEL_TOKEN"
+
+      - name: Smoke-test production
+        run: |
+          set -euo pipefail
+          expect() { # expect <status> <curl args...>
+            local want=$1; shift
+            local got
+            got=$(curl -s -o /dev/null -w "%{http_code}" --retry 3 --retry-delay 5 "$@")
+            echo "$got  $*"
+            [ "$got" = "$want" ] || { echo "::error::expected $want"; exit 1; }
+          }
+          expect 200 "$SITE/"
+          expect 200 "$SITE/demo"
+          expect 200 "$SITE/contact"
+          expect 200 "$SITE/pilot-demo"
+          expect 200 "$SITE/robots.txt"
+          expect 401 "$SITE/api/demo/customers"
+          expect 400 -X POST -H "Content-Type: application/json" -d '{}' "$SITE/api/enquiries"
