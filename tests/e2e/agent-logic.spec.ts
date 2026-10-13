@@ -11,11 +11,12 @@ test.beforeEach(({}, testInfo) => test.skip(testInfo.project.name !== "chromium"
 
 const catalog = seed.tests as LabTest[];
 const draft = (over: Partial<Draft> = {}): Draft => ({
-  testIds: [], sampleType: null, samples: null, name: "Arun", company: "Malabar", email: null, gstNo: null, noGst: false,
+  workflowVersion: 2,
+  testIds: [], sampleType: null, samples: null, name: "Arun", phone: null, company: "Malabar", email: null, gstNo: null, noGst: false,
   verification: "verified", verifyAttempts: 0, awaiting: "tests", quotationId: null, orderIds: [], ...over,
 });
 const ex = (over: Partial<Extraction> = {}): Extraction => ({
-  intent: "enquiry", testIds: [], unknownTests: [], sampleType: null, samples: null, name: null, company: null,
+  intent: "enquiry", testIds: [], unknownTests: [], sampleType: null, samples: null, name: null, phone: null, company: null,
   email: null, gstNo: null, noGst: false, engine: "fallback", ...over,
 });
 const arun = seed.customers.find((c) => c.id === "C001")!;
@@ -64,34 +65,40 @@ test("fallback parser reads contact details without mistaking company names for 
   expect(parseFallback("need aflatoxin test for chilli", "identity", seed.sampleTypes).testIds).toEqual(["T002"]);
 });
 
-test("verification matches the record and pinpoints mismatches", () => {
-  const given = { name: arun.name, company: "Malabar Spice Traders", email: arun.email.toUpperCase(), gstNo: arun.gstNo };
+test("verification checks name, phone and GST, without requiring email", () => {
+  const given = { name: arun.name, phone: arun.phone.replace(/\s/g, ""), gstNo: arun.gstNo, noGst: false };
   const ok = compareWithRecord(given, arun);
   expect([ok.matched, decideVerification(arun, ok, 0)]).toEqual([true, "verified"]);
-  const wrongEmail = compareWithRecord({ ...given, email: "arun@outlook.example" }, arun);
-  expect([wrongEmail.mismatched, decideVerification(arun, wrongEmail, 0), decideVerification(arun, wrongEmail, 1)])
-    .toEqual([["email"], "retry", "unverified"]);
+  const wrongPhone = compareWithRecord({ ...given, phone: "+91 9000000000" }, arun);
+  expect([wrongPhone.mismatched, decideVerification(arun, wrongPhone, 0), decideVerification(arun, wrongPhone, 1)])
+    .toEqual([["phone"], "retry", "unverified"]);
   expect(compareWithRecord({ ...given, gstNo: "32AAGCS4821K1Z3" }, arun).mismatched).toEqual(["gstNo"]);
-  expect(compareWithRecord({ ...given, name: "Someone Else", company: "Other Co" }, arun).mismatched).toEqual(["company"]);
+  expect(compareWithRecord({ ...given, name: "Arun" }, arun).mismatched).toEqual(["name"]);
   expect(decideVerification(null, null, 0)).toBe("new");
 });
 
-test("identify step collects all four details, rejects bad formats, then asks for a database check", () => {
+test("identity collects name, phone and GST, rejects bad formats, then requests a database check", () => {
   const base = draft({ name: null, company: null, verification: "pending", awaiting: "identity" });
   const idCtx = ctx({ state: "identify", draft: base });
-  const s1 = nextStep(idCtx, ex({ name: "Arun Menon", company: "Malabar Spice Traders", gstNo: "32LJSCM" }));
+  const s1 = nextStep(idCtx, ex({ name: "Arun Menon", phone: "bad-phone", gstNo: "32LJSCM" }));
   expect(s1.notes.join(" ")).toMatch(/doesn't look like a GST number/);
-  expect(s1.ask).toBe("Thanks! To finish verifying you, I still need your email and GST number.");
-  const s2 = nextStep(ctx({ state: "identify", draft: s1.draft }), ex({ email: arun.email, gstNo: arun.gstNo.toLowerCase() }));
+  expect(s1.ask).toContain("phone number (including country code) and GST number");
+  expect(s1.ask).not.toContain("email");
+  const s2 = nextStep(ctx({ state: "identify", draft: s1.draft }), ex({ phone: arun.phone, gstNo: arun.gstNo.toLowerCase() }));
   expect([s2.action, s2.draft.gstNo]).toEqual(["verify", arun.gstNo]);
 });
 
-test("workflow asks only for what is missing, then quotes", () => {
+test("workflow confirms selections, asks email last, and only then submits for approval", () => {
   const s1 = nextStep(ctx(), ex({ testIds: ["T002"], sampleType: "jeera" }));
   expect(s1.draft.sampleType).toBe("Cumin Seeds");
   expect(s1.ask).toMatch(/how many samples of Cumin Seeds/i);
   const s2 = nextStep(ctx({ draft: s1.draft }), ex({ samples: 4 }));
-  expect([s2.action, s2.state]).toEqual(["quote", "quoted"]);
+  expect([s2.action, s2.state]).toEqual([null, "confirming"]);
+  expect(s2.ask).toContain("4 samples of Cumin Seeds");
+  const s3 = nextStep(ctx({ state: s2.state, draft: s2.draft }), ex({ intent: "confirm", email: "early@example.com" }));
+  expect([s3.state, s3.draft.email]).toEqual(["email", null]);
+  const s4 = nextStep(ctx({ state: s3.state, draft: s3.draft }), ex({ email: "final@example.com" }));
+  expect([s4.state, s4.action, s4.draft.email]).toEqual(["pending_approval", "submit", "final@example.com"]);
 });
 
 test("workflow never invents: unknown tests, sample types and discounts are declined and flagged", () => {
@@ -102,9 +109,54 @@ test("workflow never invents: unknown tests, sample types and discounts are decl
   expect(s.action).toBeNull();
 });
 
-test("confirming a quote orders it; changing details re-quotes", () => {
-  const quoted = draft({ testIds: ["T001"], sampleType: "Turmeric Powder", samples: 2, quotationId: "Q-2026-0001", awaiting: "confirm" });
-  expect(nextStep(ctx({ state: "quoted", draft: quoted }), ex({ intent: "confirm" })).action).toBe("order");
-  const changed = nextStep(ctx({ state: "quoted", draft: quoted }), ex({ samples: 5 }));
-  expect([changed.action, changed.draft.samples]).toEqual(["quote", 5]);
+test("changing samples invalidates confirmation; submitted details are immutable", () => {
+  const selected = draft({ testIds: ["T001"], sampleType: "Turmeric Powder", samples: 2, awaiting: "confirm" });
+  const changed = nextStep(ctx({ state: "confirming", draft: selected }), ex({ intent: "confirm", samples: 5 }));
+  expect([changed.state, changed.action, changed.draft.samples]).toEqual(["confirming", null, 5]);
+  const submitted = nextStep(ctx({ state: "pending_approval", draft: selected }), ex({ intent: "confirm", samples: 5, email: "hijack@example.com" }));
+  expect([submitted.action, submitted.draft.samples, submitted.draft.email]).toEqual([null, 2, null]);
+});
+
+test("first request retains services and sample details, but requires identity first", () => {
+  const first = nextStep(ctx({ state: "requesting", draft: draft({ name: null, verification: "pending" }) }),
+    ex({ testIds: ["T001", "T002"], sampleType: "pepper", samples: 3 }));
+  expect([first.state, first.draft.testIds, first.draft.samples]).toEqual(["identify", ["T001", "T002"], 3]);
+  expect(first.ask).toContain("full name");
+  expect(first.events).not.toContainEqual(expect.objectContaining({ label: "Requested services available" }));
+});
+
+test("fallback reads phone/GST without using them as sample counts or company names", () => {
+  for (const c of seed.customers) {
+    const result = parseFallback(`${c.name}, Phone: ${c.phone}, GST ${c.gstNo}`, "identity", seed.sampleTypes);
+    expect([result.name, result.phone, result.gstNo, result.samples, result.email], c.id)
+      .toEqual([c.name, c.phone, c.gstNo, null, null]);
+  }
+  expect(parseFallback("3 samples", "samples", seed.sampleTypes).phone).toBeNull();
+  expect(parseFallback("pepper.lab@example.com", "email", seed.sampleTypes).sampleType).toBeNull();
+  expect(parseFallback("5 samples", "email", seed.sampleTypes).samples).toBe(5);
+  expect(parseFallback("-1 samples", "samples", seed.sampleTypes).samples).toBe(-1);
+  expect(parseFallback("1.5 samples", "samples", seed.sampleTypes).samples).toBe(1.5);
+  expect(parseFallback("Need aflatoxin testing for 3 red chilli powder samples", "tests", seed.sampleTypes).samples).toBe(3);
+  for (const email of ["discount@example.com", "urgent@example.com", "aflatoxin.pepper@example.com"]) {
+    const read = parseFallback(email, "email", seed.sampleTypes);
+    expect([read.intent, read.testIds, read.sampleType, read.samples]).toEqual(["other", [], null, null]);
+  }
+});
+
+test("invalid counts and unsupported sample changes cannot reuse a previously valid selection", () => {
+  const selected = draft({ testIds: ["T001"], sampleType: "Turmeric Powder", samples: 2 });
+  for (const samples of [0, -1, 1.5, 51]) {
+    const result = nextStep(ctx({ state: "confirming", draft: selected }), ex({ samples, intent: "confirm" }));
+    expect(result.action).toBeNull(); expect(result.draft.samples).toBeNull();
+  }
+  const unsupported = nextStep(ctx({ state: "email", draft: selected }), ex({ sampleType: "honey", email: "user@example.com" }));
+  expect([unsupported.action, unsupported.draft.sampleType]).toEqual([null, null]);
+});
+
+test("invalid email cannot submit a quotation", () => {
+  const selected = draft({ testIds: ["T001"], sampleType: "Turmeric Powder", samples: 2 });
+  for (const email of ["bad", "x@y", "a@example.com\r\nBcc: x@y.com", "a".repeat(250) + "@example.com"]) {
+    const result = nextStep(ctx({ state: "email", draft: selected }), ex({ email }));
+    expect(result.state).toBe("email"); expect(result.action).toBeNull();
+  }
 });

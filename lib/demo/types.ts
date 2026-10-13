@@ -41,6 +41,7 @@ export interface Extraction {
   sampleType: string | null;
   samples: number | null;
   name: string | null;
+  phone: string | null;
   company: string | null;
   email: string | null;
   gstNo: string | null;
@@ -49,15 +50,17 @@ export interface Extraction {
   note?: string; // e.g. why the fallback was used
 }
 
-export type ConvState = "identify" | "collecting" | "quoted" | "ordered";
+export type ConvState = "requesting" | "identify" | "collecting" | "confirming" | "email" | "pending_approval";
 export type Verification = "pending" | "verified" | "new" | "unverified";
-export type Awaiting = "identity" | "tests" | "sampleType" | "samples" | "confirm" | null;
+export type Awaiting = "identity" | "tests" | "sampleType" | "samples" | "confirm" | "email" | null;
 
 export interface Draft {
+  workflowVersion: 2;
   testIds: string[];
   sampleType: string | null;
   samples: number | null;
   name: string | null;
+  phone: string | null;
   company: string | null;
   email: string | null;
   gstNo: string | null;

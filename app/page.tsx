@@ -2,10 +2,11 @@ import LeadForm from "@/components/LeadForm";
 
 const ENQUIRY_FLOW = [
   { h: "Request on WhatsApp", p: "A customer asks for a test in their own words, any time of day." },
-  { h: "Service checked in LIMS", p: "Availability, parameters and methods are read from your LIMS, not guessed." },
-  { h: "Missing details collected", p: "The agent asks only for what's missing: sample type, quantity, turnaround." },
-  { h: "Quote from template", p: "Prices, tax and totals come from business logic, rendered on your fixed template.", key: true },
-  { h: "Enquiry saved, order created", p: "Every enquiry is stored for tracking; orders are raised in LIMS where needed." },
+  { h: "Customer verified", p: "Name, phone number and GST number are checked against customer records." },
+  { h: "Services checked", p: "Availability comes from the service catalogue, never from AI guesswork." },
+  { h: "Services & samples confirmed", p: "The customer confirms the selected services, sample type and sample count." },
+  { h: "Email collected", p: "The agent asks where the approved quotation should be sent." },
+  { h: "Staff approves, quote emailed", p: "A fixed-template quotation uses calculated prices and tax. Staff review it before emailing.", key: true },
 ];
 
 const MARKETING_FLOW = [
@@ -73,7 +74,7 @@ export default function Home() {
               <div className="quote" aria-label="Quotation summary">
                 <div className="quote-row"><span>Pesticide residue panel × 2</span><span>from LIMS</span></div>
                 <div className="quote-row"><span>Tax</span><span>by backend</span></div>
-                <div className="quote-row total"><span>QUOTE #Q-0142</span><span>SENT ✓</span></div>
+               <div className="quote-row total"><span>QUOTE #Q-0142</span><span>AWAITING APPROVAL</span></div>
               </div>
             </div>
           </div>
@@ -112,8 +113,8 @@ export default function Home() {
                 <li>Receives customer requests on WhatsApp</li>
                 <li>Checks service availability in your LIMS</li>
                 <li>Collects only the missing details</li>
-                <li>Generates a quotation from your fixed template</li>
-                <li>Saves the enquiry and creates an order where needed</li>
+                 <li>Confirms services and sample counts, then collects email</li>
+                 <li>Prepares a quotation for staff approval and email delivery</li>
               </ul>
             </article>
             <article className="card agent a">

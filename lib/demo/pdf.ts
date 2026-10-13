@@ -100,7 +100,7 @@ export async function quotationPdf(q: Quotation): Promise<Uint8Array> {
   const notes = [
     "Prices, GST and turnaround are read from the lab database and calculated by business logic. The AI assistant does not set any figure on this document.",
     "Sample data for demonstration only. Fees, GST rate and sample quantities are illustrative.",
-    "To accept, reply CONFIRM in the chat. Please label samples with the order number you receive.",
+    "Prepared for staff approval. Approved quotations are emailed; please contact the lab to proceed.",
   ];
   let fy = 92;
   page.drawLine({ start: { x: 36, y: fy + 18 }, end: { x: 559, y: fy + 18 }, thickness: 2, color: INK });

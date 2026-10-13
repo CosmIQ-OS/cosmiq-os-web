@@ -116,7 +116,7 @@ a { color: inherit; }
 .agent li::before { content: "→"; font-family: var(--f-mono); font-weight: 700; }
 
 /* FLOW (numbered steps) */
-.flow { list-style: none; display: grid; grid-template-columns: repeat(5, 1fr); border: var(--b); box-shadow: var(--sh); background: var(--white); }
+.flow { list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); border: var(--b); box-shadow: var(--sh); background: var(--white); }
 .fnode { padding: 22px 18px 26px; border-right: var(--b); position: relative; }
 .fnode:last-child { border-right: 0; }
 .fnode b { display: block; font-family: var(--f-mono); font-size: 13px; margin-bottom: 26px; }
@@ -286,13 +286,13 @@ footer { background: var(--ink); color: var(--paper); padding: 56px 0 32px; }
 .demo-tabs { display: none; }
 .demo-split { display: grid; grid-template-columns: minmax(340px, 420px) 1fr; gap: 28px; align-items: start; }
 
-.phone { border: var(--b); box-shadow: var(--sh); background: #efeae2; display: flex; flex-direction: column; height: min(760px, calc(100vh - 190px)); min-height: 560px; }
+.phone { min-width: 0; overflow: hidden; border: var(--b); box-shadow: var(--sh); background: #efeae2; display: flex; flex-direction: column; height: min(760px, calc(100vh - 190px)); min-height: 560px; }
 .phone-h { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #0f5132; color: #fff; border-bottom: var(--b); }
 .phone-h b { display: block; font-size: 16px; }
 .phone-h small { font-size: 12px; opacity: .85; }
 .phone-avatar { width: 36px; height: 36px; display: grid; place-items: center; background: var(--acc); color: var(--ink); font-family: var(--f-mono); font-weight: 700; border: 2px solid #fff; }
 .phone-sim { margin-left: auto; font-family: var(--f-mono); font-size: 10.5px; text-transform: uppercase; border: 1px solid #ffffff99; padding: 2px 6px; }
-.phone-body { flex: 1; overflow-y: auto; padding: 14px 12px; display: flex; flex-direction: column; gap: 8px; }
+.phone-body { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 12px; display: flex; flex-direction: column; gap: 8px; }
 .phone-empty { margin: auto; text-align: center; display: grid; gap: 14px; justify-items: center; background: var(--white); border: 2px solid var(--ink); padding: 20px; }
 .msg { max-width: 86%; padding: 8px 10px 6px; border-radius: 10px; font-size: 14.5px; line-height: 1.45; box-shadow: 0 1px 0 #0002; }
 .msg p { white-space: pre-line; }
@@ -319,7 +319,7 @@ footer { background: var(--ink); color: var(--paper); padding: 56px 0 32px; }
 .chips button { flex: none; border: 2px solid var(--ink); background: var(--white); padding: 6px 10px; font: 600 13px var(--f-body); cursor: pointer; min-height: 36px; }
 .chips button:hover { background: var(--hi); }
 .phone-input { display: flex; gap: 8px; padding: 10px; background: #f0f2f5; border-top: 2px solid var(--ink); }
-.phone-input input { min-height: 44px; border: 2px solid var(--ink); border-radius: 22px; background: #fff; padding: 8px 16px; }
+.phone-input input { flex: 1; min-width: 0; width: auto; min-height: 44px; border: 2px solid var(--ink); border-radius: 22px; background: #fff; padding: 8px 16px; }
 .phone-input input:focus { box-shadow: none; outline: 2px solid var(--acc); }
 .phone-input button { width: 46px; flex: none; border: 2px solid var(--ink); border-radius: 50%; background: #0f5132; color: #fff; font-size: 18px; cursor: pointer; }
 .phone-input button:disabled { opacity: .45; cursor: default; }
@@ -368,7 +368,8 @@ footer { background: var(--ink); color: var(--paper); padding: 56px 0 32px; }
 .lab-foot { padding: 10px 16px 14px; font-family: var(--f-mono); font-size: 11.5px; color: var(--mut); border-top: 2px solid var(--ink); }
 
 @media (max-width: 960px) {
-  .demo-split { grid-template-columns: 1fr; }
+  .demo-split { grid-template-columns: minmax(0, 1fr); }
+  .demo-select, .demo-select select { max-width: 100%; min-width: 0; }
   .demo-tabs { display: grid; grid-template-columns: 1fr 1fr; border: var(--b); margin-bottom: 14px; }
   .demo-tabs button { min-height: 44px; border: 0; background: var(--white); font: 700 13px var(--f-mono); text-transform: uppercase; cursor: pointer; }
   .demo-tabs button[aria-selected="true"] { background: var(--ink); color: var(--paper); }
@@ -380,3 +381,13 @@ footer { background: var(--ink); color: var(--paper); padding: 56px 0 32px; }
 @media (prefers-reduced-motion: reduce) {
   .msg.typing span, .vcard .spin { animation: none; }
 }
+/* Staff approval cards stay readable on both the lab desktop and a phone. */
+.approval-list { display: grid; gap: 24px; }
+.approval-card { min-width: 0; overflow-wrap: anywhere; }
+.approval-heading { display: flex; gap: 16px; justify-content: space-between; flex-wrap: wrap; }
+.approval-heading h2 { font-size: 22px; margin: 0; }
+.approval-card p, .approval-card ul { margin: 14px 0; }
+.approval-card ul { padding-left: 20px; }
+.approval-review { display: flex; align-items: flex-start; gap: 10px; margin: 20px 0; }
+.approval-review input { margin-top: 4px; width: 20px; min-height: 20px; flex: none; }
+.approval-reject { margin-top: 20px; max-width: 520px; }

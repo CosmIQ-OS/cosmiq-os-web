@@ -20,24 +20,26 @@ export default function Demo() {
       <section className="section alt">
         <div className="wrap demo-grid">
           <div className="panel" aria-label="Demo conversation">
-            <div className="panel-h"><span>● Customer chat</span><span>Step 1–3</span></div>
+            <div className="panel-h"><span>● Customer chat</span><span>Steps 1–5</span></div>
             <div className="panel-b">
-              <p className="bubble in"><small>Customer · 21:42</small>Hi, we need a shelf-life study and microbial testing for a new packaged snack.</p>
-              <p className="check">✓ LIMS: shelf-life study available · microbial panel available</p>
-              <p className="bubble out"><small>CosmIQ agent</small>We can do both. To prepare a quotation: what storage conditions should the study cover, and how many samples will you send?</p>
-              <p className="bubble in"><small>Customer</small>Ambient only. 3 samples.</p>
-              <p className="check">✓ LIMS: sample requirement 250 g per sample · TAT from service record</p>
-              <p className="bubble out"><small>CosmIQ agent</small>Thanks. Your quotation is ready below. Please send 250 g per sample. Reply YES to confirm and we&apos;ll create the order.</p>
+              <p className="bubble in"><small>Customer · 21:42</small>Hi, we need pesticide and aflatoxin testing for 3 black pepper samples.</p>
+              <p className="bubble out"><small>CosmIQ agent</small>Please share your full name, phone number and GST number so we can check your customer record.</p>
+              <p className="check">✓ Customer details checked against records · both services available</p>
+              <p className="bubble out"><small>CosmIQ agent</small>Please confirm: pesticide and aflatoxin testing for 3 samples of Black Pepper. Is this correct?</p>
+              <p className="bubble in"><small>Customer</small>Yes, that&apos;s correct.</p>
+              <p className="bubble out"><small>CosmIQ agent</small>What email address should we send your quotation to?</p>
+              <p className="bubble in"><small>Customer</small>customer@example.com</p>
+              <p className="bubble out"><small>CosmIQ agent</small>Your quotation will be emailed to you after approval.</p>
             </div>
           </div>
 
           <div style={{ display: "grid", gap: 28 }}>
             <div className="panel" aria-label="Generated quotation">
-              <div className="panel-h"><span>Quotation · fixed template</span><span>Step 4</span></div>
+              <div className="panel-h"><span>Staff preview · fixed template</span><span>Step 6</span></div>
               <div className="panel-b">
                 <div className="quote">
-                  <div className="quote-row"><span>Shelf-life study (ambient) × 3</span><span>price: LIMS</span></div>
-                  <div className="quote-row"><span>Microbial panel × 3</span><span>price: LIMS</span></div>
+                  <div className="quote-row"><span>Pesticide residue panel × 3</span><span>price: catalogue</span></div>
+                  <div className="quote-row"><span>Aflatoxin panel × 3</span><span>price: catalogue</span></div>
                   <div className="quote-row"><span>Tax</span><span>backend</span></div>
                   <div className="quote-row total"><span>TOTAL</span><span>computed, not generated</span></div>
                 </div>
@@ -45,10 +47,10 @@ export default function Demo() {
               </div>
             </div>
             <div className="panel">
-              <div className="panel-h"><span>Records</span><span>Step 5</span></div>
+              <div className="panel-h"><span>Approval &amp; delivery</span><span>Staff controlled</span></div>
               <div className="panel-b">
                 <p style={{ display: "flex", gap: 12, alignItems: "center" }}><span className="tag ok">Saved</span>Enquiry stored for tracking</p>
-                <p style={{ display: "flex", gap: 12, alignItems: "center" }}><span className="tag hi">On confirm</span>Order created in LIMS</p>
+                <p style={{ display: "flex", gap: 12, alignItems: "center" }}><span className="tag hi">On approval</span>Quotation PDF submitted by email</p>
               </div>
             </div>
             <div><a className="btn" href="/contact">Request the live pilot demo →</a></div>

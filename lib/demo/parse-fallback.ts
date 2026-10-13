@@ -1,5 +1,6 @@
 import { matchSampleType } from "./sample-types";
 import type { Awaiting, Extraction, Intent } from "./types";
+import { normalisePhone } from "./verify";
 
 // Offline reader used when Gemini is not configured, slow or failing.
 // Deliberately simple: keyword rules over one message, guided by what the agent last asked.
@@ -29,12 +30,12 @@ const INTENTS: Array<[Intent, RegExp]> = [
 function readSamples(text: string, awaiting: Awaiting): number | null {
   // Ignore weights, durations and IDs: "500 g each", "5 days", "ORD-1001".
   const cleaned = text.replace(/\b[A-Z]{1,4}-?\d+\b/g, " ").replace(/\d+(\.\d+)?\s*(g|gm|gms|grams?|kg|kgs|ml|l|days?|%)\b/gi, " ");
-  // "3 samples", "3 chilli samples", "three pepper batches": up to two words between number and unit.
-  const counted = cleaned.match(/(\d+|\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty)\b)\s*(?:[a-z]+\s+){0,2}(samples?|nos?\.?|batch(es)?|lots?|packets?|pcs)\b/i);
-  const toNumber = (s: string) => (/^\d+$/.test(s) ? Number(s) : NUMBER_WORDS[s.toLowerCase()] ?? null);
+  // Include multi-word sample names: "3 red chilli powder samples".
+  const counted = cleaned.match(/(-?\d+(?:\.\d+)?|\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty)\b)\s*(?:[a-z]+\s+){0,4}(samples?|nos?\.?|batch(es)?|lots?|packets?|pcs)\b/i);
+  const toNumber = (s: string) => (/^-?\d+(?:\.\d+)?$/.test(s) ? Number(s) : NUMBER_WORDS[s.toLowerCase()] ?? null);
   if (counted) return toNumber(counted[1]);
   if (awaiting === "samples") {
-    const bare = cleaned.match(/\d+|\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty)\b/i);
+    const bare = cleaned.match(/-?\d+(?:\.\d+)?|\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty)\b/i);
     if (bare) return toNumber(bare[0]);
   }
   return null;
@@ -52,7 +53,7 @@ const EMAIL_IN_TEXT = /[^\s@,;:()]+@[^\s@,;:()]+\.[a-z]{2,}/i;
 const GSTIN_IN_TEXT = /\b\d{2}\s?[A-Z]{5}\s?\d{4}\s?[A-Z][1-9A-Z]Z[0-9A-Z]\b/i;
 const NO_GST = /\b(no|don'?t have( a)?|not registered( for)?|without( a)?|unregistered)\b[^.]{0,20}\bgst/i;
 // "Email:", "GST no.", "GSTIN"; "Name:" / "Company:" only with a colon, so "my name is…" survives.
-const CONTACT_LABELS = /\b(e-?mail( id| address)?|mail id|gstin|gst\s*(no\.?|number|num)?)\b\s*[:\-]?|\b(name|company)\s*:/gi;
+const CONTACT_LABELS = /\b(e-?mail( id| address)?|mail id|gstin|gst\s*(no\.?|number|num)?|phone(?: number)?|mobile(?: number)?|contact number)\b\s*[:\-]?|\b(name|company)\s*:/gi;
 
 // "Spice Route Exports. Email … and our GSTIN is …" → "Spice Route Exports"
 function cleanCompany(raw: string): string | null {
@@ -64,24 +65,27 @@ export function parseFallback(text: string, awaiting: Awaiting, sampleTypes: str
   const email = text.match(EMAIL_IN_TEXT)?.[0] ?? null;
   const gstNo = text.match(GSTIN_IN_TEXT)?.[0].replace(/\s/g, "").toUpperCase() ?? null;
   const noGst = NO_GST.test(text);
+  const enquiryText = text.replace(EMAIL_IN_TEXT, " ");
+  const phoneMatch = text.match(/\+?\d[\d ()-]{6,}\d/);
+  const phone = phoneMatch && normalisePhone(phoneMatch[0]).length <= 15 ? phoneMatch[0].trim() : null;
   // While asking for contact details, spice words are usually company names ("Rajputana Chilli Industries"),
   // so only an explicitly named test turns the message into an enquiry.
-  const namesATest = TEST_KEYWORDS.some(([, re]) => re.test(text)) || UNOFFERED_TESTS.test(text);
-  const detailsOnly = awaiting === "identity" && (email !== null || gstNo !== null || noGst || !namesATest);
+  const namesATest = TEST_KEYWORDS.some(([, re]) => re.test(enquiryText)) || UNOFFERED_TESTS.test(enquiryText);
+  const detailsOnly = awaiting === "identity" && (email !== null || phone !== null || gstNo !== null || noGst || !namesATest);
 
-  const intent = detailsOnly ? "other" : INTENTS.find(([, re]) => re.test(text))?.[0] ?? "enquiry";
-  const testIds = detailsOnly ? [] : TEST_KEYWORDS.filter(([, re]) => re.test(text)).map(([id]) => id);
-  const unknownTests = !detailsOnly && UNOFFERED_TESTS.test(text) ? [text.match(UNOFFERED_TESTS)![0]] : [];
+  const intent = detailsOnly || !enquiryText.trim() ? "other" : INTENTS.find(([, re]) => re.test(enquiryText))?.[0] ?? "enquiry";
+  const testIds = detailsOnly ? [] : TEST_KEYWORDS.filter(([, re]) => re.test(enquiryText)).map(([id]) => id);
+  const unknownTests = !detailsOnly && UNOFFERED_TESTS.test(enquiryText) ? [enquiryText.match(UNOFFERED_TESTS)![0]] : [];
 
-  let sampleType: string | null = detailsOnly ? null : matchSampleType(text, sampleTypes);
+  let sampleType: string | null = detailsOnly ? null : matchSampleType(enquiryText, sampleTypes);
   if (!sampleType && !detailsOnly) {
-    const other = text.match(OTHER_FOODS);
+    const other = enquiryText.match(OTHER_FOODS);
     if (other) sampleType = other[0];
   }
 
   // "Hi, I'm Asha from Spice Co, asha@…, GST …" → drop greeting, email, GST and labels; keep name and company.
   const intro = text
-    .replace(EMAIL_IN_TEXT, " ").replace(GSTIN_IN_TEXT, " ").replace(NO_GST, " ").replace(CONTACT_LABELS, " ")
+    .replace(EMAIL_IN_TEXT, " ").replace(GSTIN_IN_TEXT, " ").replace(NO_GST, " ").replace(phoneMatch?.[0] ?? /$^/, " ").replace(CONTACT_LABELS, " ")
     .replace(/^\s*(hi|hello|hey|good (morning|afternoon|evening)|namaskaram|namaste)[\s,!.]*/i, "")
     .replace(/\s*,(\s*,)+/g, ",").replace(/^[\s,.]+|[\s,.]+$/g, "");
   const talksAboutTests = testIds.length > 0 || sampleType !== null || unknownTests.length > 0;
@@ -93,8 +97,9 @@ export function parseFallback(text: string, awaiting: Awaiting, sampleTypes: str
     testIds,
     unknownTests,
     sampleType,
-    samples: detailsOnly ? null : readSamples(text, awaiting),
+    samples: detailsOnly ? null : readSamples(enquiryText, awaiting),
     name: identity.name,
+    phone,
     company: identity.company ? cleanCompany(identity.company) : null,
     email,
     gstNo,

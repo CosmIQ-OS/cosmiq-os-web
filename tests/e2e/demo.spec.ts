@@ -1,113 +1,172 @@
-import { test, expect, type Page } from "@playwright/test";
-
-// One shared demo database: run these in order, on desktop only, so resets can't race.
-test.describe.configure({ mode: "serial" });
-test.beforeEach(({}, testInfo) => test.skip(testInfo.project.name !== "chromium", "demo flow runs on desktop"));
+import { test, expect, type Page, type APIRequestContext } from "@playwright/test";
+import seed from "../../lib/demo/seed-data.json";
+import { PDFDocument } from "pdf-lib";
 
 async function unlock(page: Page) {
   expect((await page.request.post("/api/demo/access", { data: { code: "playwright-demo-code" } })).ok()).toBeTruthy();
   await page.goto("/pilot-demo");
-  await expect(page.getByRole("heading", { name: /agentic enquiry desk/i })).toBeVisible();
+  await expect(page.getByLabel("Chat as customer").locator("option")).toHaveCount(21, { timeout: 20_000 });
 }
-
+async function staff(request: APIRequestContext) {
+  expect((await request.post("/api/staff/session", { data: { password: "playwright-staff-password" } })).ok()).toBeTruthy();
+}
 async function say(page: Page, text: string) {
   await page.getByRole("textbox", { name: "Message" }).fill(text);
-  await page.getByRole("button", { name: "Send" }).click();
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+}
+const chat = (page: Page) => page.getByRole("log", { name: "Chat messages" });
+const arun = seed.customers[0];
+const identity = `${arun.name}, phone ${arun.phone}, GST ${arun.gstNo}`;
+async function apiQuote(request: APIRequestContext, recipient: string) {
+  await request.post("/api/demo/access", { data: { code: "playwright-demo-code" } });
+  const created = await request.post("/api/demo/conversations", { data: { customerId: arun.id } });
+  const id = (await created.json()).conversation.id;
+  let view;
+  for (const text of ["aflatoxin for chilli, 3 samples", identity, "Confirm", recipient]) {
+    const response = await request.post(`/api/demo/conversations/${id}/messages`, { data: { text } });
+    expect(response.ok()).toBeTruthy(); view = await response.json();
+  }
+  expect(view.conversation.state).toBe("pending_approval");
+  return { id, quotationId: view.conversation.draft.quotationId as string, view };
+}
+async function captured(request: APIRequestContext, id: string) {
+  return (await request.get(`http://127.0.0.1:3101/?key=${encodeURIComponent(`quotation/${id}`)}`)).json();
 }
 
-const chat = (page: Page) => page.getByRole("log", { name: "Chat messages" });
-const lab = (page: Page) => page.getByRole("complementary", { name: "Lab dashboard" });
-
-test("demo is locked without the access code", async ({ page, request }) => {
-  expect((await request.get("/api/demo/customers")).status()).toBe(401);
-  expect((await request.post("/api/demo/reset")).status()).toBe(401);
+test("demo and staff APIs are locked; demo access cannot approve or preview quotations", async ({ page, request }) => {
+  for (const path of ["/api/demo/customers", "/api/staff/quotations"]) expect((await request.get(path)).status()).toBe(401);
   await page.goto("/pilot-demo");
   await expect(page.getByRole("heading", { name: "Enter the demo code." })).toBeVisible();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
   await page.getByLabel("Demo code").fill("wrong");
   await page.getByRole("button", { name: /open the demo/i }).click();
-  await expect(page.getByRole("form", { name: "Demo access" }).getByRole("alert")).toHaveText("That code isn't right.");
-  await page.getByLabel("Demo code").fill("playwright-demo-code");
-  await page.getByRole("button", { name: /open the demo/i }).click();
-  await expect(page.getByRole("heading", { name: /agentic enquiry desk/i })).toBeVisible();
+  await expect(page.getByRole("form", { name: "Demo access" }).getByRole("alert")).toContainText("That code isn't right.");
+  const { quotationId } = await apiQuote(request, "locked@example.com");
+  expect((await request.get(`/api/demo/quotations/${quotationId}/pdf`)).status()).toBe(403);
+  expect((await request.get(`/api/staff/quotations/${quotationId}/pdf`)).status()).toBe(401);
+  expect((await request.post(`/api/staff/quotations/${quotationId}`, { data: { action: "approve" } })).status()).toBe(401);
+  expect((await request.post("/api/demo/reset")).status()).toBe(401);
+  expect((await captured(request, quotationId)).accepted).toBeNull();
 });
 
-// The verification card "acts" the database check before revealing the reply (~3 s).
-const VERIFY_WAIT = { timeout: 10_000 };
-
-async function startAs(page: Page, persona: string) {
-  await page.getByLabel("Chat as customer").selectOption(persona);
+test("full workflow: services first → identity → confirmation → email → staff approval → PDF email", async ({ page }, testInfo) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await unlock(page);
   await page.getByRole("button", { name: /start chat/i }).first().click();
-  await expect(chat(page)).toContainText("please share your name, company, email and GST number");
-}
-
-test("known customer: verified → enquiry → quotation PDF → order, mirrored on the lab dashboard", async ({ page }) => {
-  await unlock(page);
-  await page.getByRole("button", { name: "Reset demo" }).click();
-  await startAs(page, "C001");
-  await expect(lab(page)).toContainText("Verification in progress");
-
-  await page.getByRole("button", { name: "Send my details" }).click();
-  await expect(page.getByLabel("Customer verification").last()).toContainText("Verified", VERIFY_WAIT);
-  await expect(chat(page)).toContainText("You're verified. Welcome back, Arun!", VERIFY_WAIT);
-  await expect(lab(page)).toContainText("Customer verified: Arun Menon (C001)");
-  await expect(lab(page)).toContainText("✓ Verified");
-
-  await say(page, "Need aflatoxin testing for red chilli powder");
-  await expect(chat(page)).toContainText("How many samples of Red Chilli Powder");
-  await page.getByRole("button", { name: "3 samples" }).click();
-
-  const card = page.getByLabel(/^Quotation Q-\d{4}-\d{4}$/);
-  await expect(card).toContainText("INR 11,328"); // 3 × 3,200 + 18% GST
-  await expect(lab(page)).toContainText("Quotation sent");
-  const pdf = await page.request.get((await card.getByRole("link", { name: /quotation pdf/i }).getAttribute("href"))!);
-  expect(pdf.headers()["content-type"]).toBe("application/pdf");
-  expect((await pdf.body()).subarray(0, 5).toString()).toBe("%PDF-");
-
-  await page.getByRole("button", { name: "Confirm" }).click();
-  await expect(chat(page)).toContainText("Order ORD-1053 created");
-  await expect(lab(page)).toContainText("Order ORD-1053 created in lab system");
-  await expect(lab(page)).toContainText("Order created");
+  await expect(chat(page)).toContainText("Which testing services do you need?");
+  if (testInfo.project.name === "mobile-chromium") {
+    const box = (await page.getByRole("button", { name: "Send", exact: true }).boundingBox())!;
+    expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
+  }
+  await say(page, "Need aflatoxin testing for 3 red chilli powder samples");
+  await expect(chat(page)).toContainText("please share your full name, phone number");
+  await page.getByRole("button", { name: "Send my details", exact: true }).click();
+  await expect(chat(page)).toContainText("You're verified. Welcome back, Arun!");
+  await expect(chat(page)).toContainText("Please confirm: Aflatoxin for 3 samples of Red Chilli Powder");
+  await expect(chat(page)).not.toContainText("What email address");
+  await page.getByRole("button", { name: "Confirm", exact: true }).click();
+  await expect(chat(page)).toContainText("What email address should we send your quotation to?");
+  const recipient = `browser-${testInfo.project.name}-${Date.now()}@example.com`;
+  await say(page, recipient);
+  await expect(chat(page)).toContainText("Your quotation will be emailed to you after approval.");
+  await page.screenshot({ path: testInfo.outputPath("submitted-chat.png"), fullPage: true });
+  await expect(page.locator(".qcard")).toHaveCount(0);
+  const id = await page.evaluate(() => sessionStorage.getItem("cosmiq-conversation"));
+  const view = await (await page.request.get(`/api/demo/conversations/${id}`)).json();
+  expect(view.orders).toEqual([]);
+  const quotationId = view.conversation.draft.quotationId;
+  expect((await captured(page.request, quotationId)).accepted).toBeNull();
+  await page.reload();
+  await expect(chat(page)).toContainText("Your quotation will be emailed to you after approval.");
+  if (testInfo.project.name === "mobile-chromium") await page.getByRole("tab", { name: "Lab dashboard" }).click();
+  await expect(page.getByRole("complementary", { name: "Lab dashboard" })).toContainText("Awaiting staff approval");
+  await page.goto("/staff/quotations");
+  await page.getByLabel("Staff password").fill("playwright-staff-password");
+  await page.getByRole("button", { name: /sign in/i }).click();
+  const row = page.getByRole("article", { name: `Quotation ${quotationId}`, exact: true });
+  await expect(row).toContainText("INR 11,328");
+  await expect(row).toContainText(recipient);
+  const pdfResponse = await page.request.get(`/api/staff/quotations/${quotationId}/pdf`);
+  expect(pdfResponse.headers()["content-type"]).toBe("application/pdf");
+  const pdf = await PDFDocument.load(await pdfResponse.body());
+  expect(pdf.getPageCount()).toBeGreaterThan(0); expect(pdf.getTitle()).toBe(`Quotation ${quotationId}`);
+  await row.getByRole("button", { name: "Approve & email" }).click();
+  await expect(row).toContainText("Email submitted");
+  await page.screenshot({ path: testInfo.outputPath("approved-quotation.png"), fullPage: true });
+  const mail = await captured(page.request, quotationId);
+  expect(mail.attempts).toHaveLength(1);
+  expect(mail.accepted.payload.to).toEqual([recipient]);
+  expect(mail.accepted.payload.attachments[0].filename).toBe(`${quotationId}.pdf`);
+  expect(Buffer.from(mail.accepted.payload.attachments[0].content, "base64").subarray(0, 5).toString()).toBe("%PDF-");
+  // Repeated approval is a no-op, not another provider call.
+  expect((await page.request.post(`/api/staff/quotations/${quotationId}`, { data: { action: "approve" } })).ok()).toBeTruthy();
+  expect((await captured(page.request, quotationId)).attempts).toHaveLength(1);
+  await page.goto("/pilot-demo");
+  if (testInfo.project.name === "mobile-chromium") await page.getByRole("tab", { name: "Lab dashboard" }).click();
+  await expect(page.getByRole("complementary", { name: "Lab dashboard" })).toContainText("Email submitted");
 });
 
-test("mismatch: re-check once, then flag staff and continue unverified", async ({ page }) => {
-  await unlock(page);
-  await startAs(page, "C002");
-  await page.getByRole("button", { name: "Send with wrong email" }).click();
-  await expect(chat(page)).toContainText("Please re-check your email address", VERIFY_WAIT);
-  await expect(lab(page)).toContainText("Details don't match record (attempt 1 of 2)");
-
-  await page.getByRole("button", { name: "Send with wrong email" }).click();
-  await expect(chat(page)).toContainText("I still can't match those details", VERIFY_WAIT);
-  await expect(lab(page)).toContainText("⚑ Unverified");
-  await expect(lab(page)).toContainText("Needs staff: customer details don't match records");
-  await expect(lab(page)).not.toContainText("previous orders"); // record history stays hidden
-
+test("mismatched phone retries once, hides history, and requires staff identity review", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "chromium", "identity path once");
+  await page.emulateMedia({ reducedMotion: "reduce" }); await unlock(page);
+  await page.getByLabel("Chat as customer").selectOption("C002");
+  await page.getByRole("button", { name: /start chat/i }).first().click();
   await say(page, "pesticide residue for turmeric, 2 samples");
-  await expect(page.getByLabel(/^Quotation Q-\d{4}-\d{4}$/).last()).toContainText("INR 10,620");
+  await page.getByRole("button", { name: "Send with wrong phone" }).click();
+  await expect(chat(page)).toContainText("Please re-check your phone number");
+  await page.getByRole("button", { name: "Send with wrong phone" }).click();
+  await expect(chat(page)).toContainText("I still can't match those details");
+  const id = await page.evaluate(() => sessionStorage.getItem("cosmiq-conversation"));
+  let view = await (await page.request.get(`/api/demo/conversations/${id}`)).json();
+  expect(view.profile).toBeNull(); expect(view.conversation.draft.verification).toBe("unverified");
+  await page.getByRole("button", { name: "Confirm", exact: true }).click();
+  await say(page, "unverified@example.com");
+  await expect(chat(page)).toContainText("Your quotation will be emailed");
+  view = await (await page.request.get(`/api/demo/conversations/${id}`)).json();
+  await staff(page.request);
+  const approval = await page.request.post(`/api/staff/quotations/${view.conversation.draft.quotationId}`, { data: { action: "approve" } });
+  expect(approval.status()).toBe(400);
+  await page.goto("/staff/quotations");
+  const row = page.getByRole("article", { name: `Quotation ${view.conversation.draft.quotationId}`, exact: true });
+  await expect(row.getByRole("button", { name: "Approve & email" })).toBeDisabled();
+  await row.getByRole("checkbox").check();
+  await row.getByRole("button", { name: "Approve & email" }).click();
+  await expect(row).toContainText("Email submitted");
 });
 
-test("new customer is registered, and guardrails still apply", async ({ page }) => {
-  await unlock(page);
-  await startAs(page, "new");
-  await page.getByRole("button", { name: "Send my details" }).click();
-  await expect(chat(page)).toContainText("I've registered Spice Route Exports as a new customer", VERIFY_WAIT);
-  await expect(lab(page)).toContainText("New customer registered: C021");
-
-  await say(page, "honey testing please");
-  await expect(chat(page)).toContainText("Honey isn't on our list of accepted sample types");
-  await say(page, "any discount?");
-  await expect(chat(page)).toContainText("I can't offer discounts");
-  await expect(lab(page)).toContainText("⚑ Needs staff");
-  await expect(lab(page)).toContainText("Needs staff: discount requested");
+test("rejecting a quotation sends no email; rejected quotations cannot be approved", async ({ page }) => {
+  const { quotationId } = await apiQuote(page.request, "rejected@example.com"); await staff(page.request);
+  expect((await page.request.post(`/api/staff/quotations/${quotationId}`, { data: { action: "reject" } })).status()).toBe(400);
+  await page.goto("/staff/quotations");
+  const row = page.getByRole("article", { name: `Quotation ${quotationId}`, exact: true });
+  await row.getByLabel("Rejection reason").fill("Please clarify the requested testing scope.");
+  await row.getByRole("button", { name: "Reject quotation" }).click();
+  await expect(row.getByRole("status")).toHaveText("Rejected");
+  expect((await page.request.post(`/api/staff/quotations/${quotationId}`, { data: { action: "approve" } })).status()).toBe(409);
+  expect((await captured(page.request, quotationId)).accepted).toBeNull();
 });
 
-test("reset clears chats and customers registered during the demo", async ({ page }) => {
-  await unlock(page);
-  await page.getByRole("button", { name: "Reset demo" }).click();
-  await expect(chat(page)).toContainText("Start a chat as");
-  await expect(lab(page)).toContainText("Start a chat to watch the agent work");
-  await startAs(page, "new");
-  await page.getByRole("button", { name: "Send my details" }).click();
-  await expect(lab(page)).toContainText("New customer registered: C021", VERIFY_WAIT); // C021 was freed by reset
+test("provider failure is visible and retry preserves the PDF and idempotency key", async ({ page }, testInfo) => {
+  const { quotationId } = await apiQuote(page.request, `fail-once-${testInfo.project.name}@example.com`); await staff(page.request);
+  await page.goto("/staff/quotations");
+  const row = page.getByRole("article", { name: `Quotation ${quotationId}`, exact: true });
+  await row.getByRole("button", { name: "Approve & email" }).click();
+  await expect(page.locator("main").getByRole("alert")).toContainText("HTTP 503");
+  await expect(row).toContainText("Email failed");
+  await row.getByRole("button", { name: "Retry email" }).click();
+  await expect(row).toContainText("Email submitted");
+  const mail = await captured(page.request, quotationId);
+  expect(mail.attempts).toHaveLength(2); expect(mail.attempts[0]).toEqual(mail.attempts[1]);
+  expect(mail.accepted).not.toBeNull();
+});
+
+test("staff APIs reject cross-origin, malformed and nonexistent quotation actions", async ({ request }) => {
+  const { quotationId } = await apiQuote(request, "csrf@example.com"); await staff(request);
+  const url = `/api/staff/quotations/${quotationId}`;
+  expect((await request.post(url, { headers: { Origin: "https://attacker.example" }, data: { action: "approve" } })).status()).toBe(403);
+  expect((await request.post(url, { headers: { "sec-fetch-site": "cross-site" }, data: { action: "reject", reason: "oops" } })).status()).toBe(403);
+  expect((await request.post(url, { data: { action: "invalid" } })).status()).toBe(400);
+  expect((await request.post("/api/staff/quotations/missing", { data: { action: "approve" } })).status()).toBe(404);
+  expect((await captured(request, quotationId)).accepted).toBeNull();
 });

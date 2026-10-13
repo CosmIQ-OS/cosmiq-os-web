@@ -34,7 +34,7 @@ function instructions(catalog: LabTest[], sampleTypes: string[], state: ConvStat
     "- sampleType: the food or spice to be tested as the customer said it; use the accepted name when it clearly matches (chilli -> Red Chilli Powder, jeera -> Cumin Seeds, haldi -> Turmeric Powder). Return a non-matching food as written (e.g. 'honey'). null if not mentioned.",
     "- samples: number of samples/batches to test, if stated. Ignore weights (500 g), days and order numbers. A bare number answers 'how many samples' only when the agent asked for it. null otherwise.",
     "- intent: confirm (accepts/agrees to book), decline (not now/no), discount (asks for a lower price/discount/offer), faster_tat (asks for faster/urgent/express turnaround), greeting (only a greeting), enquiry (asks for or gives test details), other.",
-    "- name / company / email / gstNo: contact details when the customer gives them (gstNo = 15-character GSTIN as written). Otherwise null.",
+    "- name / phone / company / email / gstNo: contact details when the customer gives them (gstNo = 15-character GSTIN as written). Otherwise null. phone is a phone number, never a sample count or GST number; preserve the country code.",
     "- noGst: true only if the customer says they have no GST registration.",
     "- When the message is the customer's contact details, do NOT take tests or sample types from the company name (e.g. 'Rajputana Chilli Industries' is a company, not a chilli sample).",
     `Conversation state: ${state}. The agent last asked for: ${awaiting ?? "nothing specific"}.`,
@@ -50,12 +50,13 @@ const SCHEMA = {
     sampleType: { type: ["string", "null"] },
     samples: { type: ["integer", "null"] },
     name: { type: ["string", "null"] },
+    phone: { type: ["string", "null"] },
     company: { type: ["string", "null"] },
     email: { type: ["string", "null"] },
     gstNo: { type: ["string", "null"] },
     noGst: { type: "boolean" },
   },
-  required: ["intent", "testIds", "unknownTests", "sampleType", "samples", "name", "company", "email", "gstNo", "noGst"],
+  required: ["intent", "testIds", "unknownTests", "sampleType", "samples", "name", "phone", "company", "email", "gstNo", "noGst"],
 };
 
 function fallbackReason(error: unknown, timedOut: boolean): string {
@@ -77,6 +78,7 @@ function sanitise(raw: Record<string, unknown>, catalog: LabTest[]): Omit<Extrac
     sampleType: str(raw.sampleType),
     samples,
     name: str(raw.name),
+    phone: str(raw.phone),
     company: str(raw.company),
     email: str(raw.email),
     gstNo: str(raw.gstNo),

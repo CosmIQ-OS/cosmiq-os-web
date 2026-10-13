@@ -17,6 +17,7 @@ const POLL_MS = 1500;
 
 export default function DemoApp() {
   const [customers, setCustomers] = useState<CustomerOption[]>([]);
+  const [customersLoading, setCustomersLoading] = useState(true);
   const [who, setWho] = useState("C001");
   const [view, setView] = useState<ConversationView | null>(null);
   const [pending, setPending] = useState<{ text: string; afterCount: number } | null>(null);
@@ -26,10 +27,21 @@ export default function DemoApp() {
   const conversationId = view?.conversation.id;
 
   useEffect(() => {
+    const saved = sessionStorage.getItem("cosmiq-conversation");
+    if (!saved) return;
+    fetch(`/api/demo/conversations/${saved}`, { cache: "no-store" }).then(async (r) => {
+      if (!r.ok) { sessionStorage.removeItem("cosmiq-conversation"); return; }
+      const restored: ConversationView = await r.json();
+      setView(restored); setWho(restored.conversation.personaId ?? "new");
+    }).catch(() => setError("Could not restore your chat. Please refresh."));
+  }, []);
+
+  useEffect(() => {
     fetch("/api/demo/customers", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : Promise.reject(r)))
       .then(setCustomers)
-      .catch(() => setError("Could not load the customer list."));
+      .catch(() => setError("Could not load the customer list. Please refresh."))
+      .finally(() => setCustomersLoading(false));
   }, []);
 
   // The lab panel follows the database, as a second screen in the lab would.
@@ -53,10 +65,12 @@ export default function DemoApp() {
   }
 
   async function start() {
+    if (busy || customersLoading) return;
     setBusy(true);
     const next = await call("/api/demo/conversations", { customerId: who === "new" ? null : who });
     if (next) {
       setView(next);
+      sessionStorage.setItem("cosmiq-conversation", next.conversation.id);
       setTab("chat");
     }
     setBusy(false);
@@ -76,8 +90,9 @@ export default function DemoApp() {
     setBusy(true);
     if (await fetch("/api/demo/reset", { method: "POST" }).then((r) => r.ok).catch(() => false)) {
       setView(null);
+      sessionStorage.removeItem("cosmiq-conversation");
       setError("");
-    } else setError("Could not reset the demo.");
+    } else setError("Could not reset the demo. Staff sign-in is required, and no email can be in progress.");
     setBusy(false);
   }
 
@@ -98,7 +113,7 @@ export default function DemoApp() {
               <option value="new">New customer (not in database)</option>
             </select>
           </label>
-          <button className="btn btn-sm" onClick={start} disabled={busy}>{view ? "New chat" : "Start chat"} →</button>
+          <button className="btn btn-sm" onClick={start} disabled={busy || customersLoading}>{customersLoading ? "Loading customers…" : view ? "New chat" : "Start chat"} →</button>
           <button className="btn btn-sm ghost" onClick={reset} disabled={busy}>Reset demo</button>
         </div>
       </div>
@@ -108,7 +123,7 @@ export default function DemoApp() {
         <button role="tab" aria-selected={tab === "lab"} onClick={() => setTab("lab")}>Lab dashboard</button>
       </div>
       <div className="demo-split" data-tab={tab}>
-        <PhoneChat view={view} pending={pending} busy={busy} onSend={send} onStart={start}
+        <PhoneChat view={view} pending={pending} busy={busy || customersLoading} onSend={send} onStart={start}
           startLabel={who === "new" ? "a new customer" : chosen ? `${chosen.name} (${chosen.company})` : "a customer"} />
         <LabPanel view={view} />
       </div>

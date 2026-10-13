@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { handleMessage } from "@/lib/demo/agent";
-import { getConversationView } from "@/lib/demo/data";
+import { ConversationBusy, handleMessage } from "@/lib/demo/agent";
+import { ConversationLeaseLost, getConversationView } from "@/lib/demo/data";
 import { demoRoute, readJson } from "@/lib/demo/route";
 
 export const runtime = "nodejs";
@@ -13,7 +13,12 @@ export function POST(req: NextRequest, { params }: { params: Promise<{ id: strin
     if (typeof text !== "string" || !text.trim() || text.length > 500) {
       return NextResponse.json({ error: "Message must be 1–500 characters." }, { status: 400 });
     }
-    if (!(await handleMessage(id, text.trim()))) return NextResponse.json({ error: "Conversation not found." }, { status: 404 });
+    try {
+      if (!(await handleMessage(id, text.trim()))) return NextResponse.json({ error: "Conversation not found." }, { status: 404 });
+    } catch (error) {
+      if (error instanceof ConversationBusy || error instanceof ConversationLeaseLost) return NextResponse.json({ error: error.message }, { status: 409 });
+      throw error;
+    }
     return NextResponse.json(await getConversationView(id));
   });
 }
