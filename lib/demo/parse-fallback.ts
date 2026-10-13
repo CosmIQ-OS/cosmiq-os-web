@@ -1,6 +1,6 @@
 import { matchSampleType } from "./sample-types";
 import type { Awaiting, Extraction, Intent } from "./types";
-import { normalisePhone } from "./verify";
+import { normaliseGst, normalisePhone } from "./verify";
 
 // Offline reader used when Gemini is not configured, slow or failing.
 // Deliberately simple: keyword rules over one message, guided by what the agent last asked.
@@ -50,8 +50,10 @@ function readIdentity(text: string): { name: string | null; company: string | nu
 }
 
 const EMAIL_IN_TEXT = /[^\s@,;:()]+@[^\s@,;:()]+\.[a-z]{2,}/i;
-const GSTIN_IN_TEXT = /\b\d{2}\s?[A-Z]{5}\s?\d{4}\s?[A-Z][1-9A-Z]Z[0-9A-Z]\b/i;
-const NO_GST = /\b(no|don'?t have( a)?|not registered( for)?|without( a)?|unregistered)\b[^.]{0,20}\bgst/i;
+// Validate the complete GSTIN shape while tolerating copy-pasted separators between characters.
+const GSTIN_IN_TEXT = /\b\d[\s-]*\d[\s-]*[A-Z](?:[\s-]*[A-Z]){4}[\s-]*\d(?:[\s-]*\d){3}[\s-]*[A-Z][\s-]*[1-9A-Z][\s-]*Z[\s-]*[0-9A-Z]\b/i;
+const NO_GST = /\b(?:(?:no|without|don'?t have|do not have|not registered(?: for)?|unregistered)(?:\s+(?:a|any))?\s+gst(?:\s+(?:registration|number))?|not\s+gst\s+registered|gst(?:\s+(?:number|registration))?\s*(?:is\s+)?(?:not\s+(?:available|applicable|registered)|n\/?a|none|nil))\b/i;
+const NO_GST_REPLY = /^\s*(?:n\s*\/?\s*a|none|nil|no|not applicable|not available|not registered|(?:i\s+)?(?:do not|don'?t)\s+have\s+(?:one|it|any))\s*[.!]?\s*$/i;
 // "Email:", "GST no.", "GSTIN"; "Name:" / "Company:" only with a colon, so "my name is…" survives.
 const CONTACT_LABELS = /\b(e-?mail( id| address)?|mail id|gstin|gst\s*(no\.?|number|num)?|phone(?: number)?|mobile(?: number)?|contact number)\b\s*[:\-]?|\b(name|company)\s*:/gi;
 
@@ -63,17 +65,23 @@ function cleanCompany(raw: string): string | null {
 
 export function parseFallback(text: string, awaiting: Awaiting, sampleTypes: string[]): Extraction {
   const email = text.match(EMAIL_IN_TEXT)?.[0] ?? null;
-  const gstNo = text.match(GSTIN_IN_TEXT)?.[0].replace(/\s/g, "").toUpperCase() ?? null;
-  const noGst = NO_GST.test(text);
+  const validGstText = text.match(GSTIN_IN_TEXT)?.[0];
+  const labelledGst = !validGstText ? text.match(/\bgst(?:in|\s*(?:no\.?|number))?\s*[:=-]?\s*([A-Z0-9][A-Z0-9\s-]*)$/i) : null;
+  const gstText = validGstText ?? labelledGst?.[1];
+  const noGst = NO_GST.test(text) || (awaiting === "gstNo" && NO_GST_REPLY.test(text));
+  const gstNo = !noGst && gstText ? normaliseGst(gstText) : null;
   const enquiryText = text.replace(EMAIL_IN_TEXT, " ");
-  const phoneMatch = text.match(/\+?\d[\d ()-]{6,}\d/);
+  const phoneMatch = text.replace(gstText ?? /$^/, " ").match(/\+?\d[\d ()-]{6,}\d/);
   const phone = phoneMatch && normalisePhone(phoneMatch[0]).length <= 15 ? phoneMatch[0].trim() : null;
   // While asking for contact details, spice words are usually company names ("Rajputana Chilli Industries"),
   // so only an explicitly named test turns the message into an enquiry.
   const namesATest = TEST_KEYWORDS.some(([, re]) => re.test(enquiryText)) || UNOFFERED_TESTS.test(enquiryText);
-  const detailsOnly = awaiting === "identity" && (email !== null || phone !== null || gstNo !== null || noGst || !namesATest);
+  const identityPhase = awaiting === "identity" || awaiting === "gstNo";
+  const detailsOnly = identityPhase && (email !== null || phone !== null || gstNo !== null || noGst || !namesATest);
 
-  const intent = detailsOnly || !enquiryText.trim() ? "other" : INTENTS.find(([, re]) => re.test(enquiryText))?.[0] ?? "enquiry";
+  const detectedIntent = INTENTS.find(([, re]) => re.test(enquiryText))?.[0];
+  const gstSideIntent = awaiting === "gstNo" && detectedIntent && ["greeting", "discount", "faster_tat"].includes(detectedIntent);
+  const intent = (detailsOnly && !gstSideIntent) || !enquiryText.trim() ? "other" : detectedIntent ?? "enquiry";
   const testIds = detailsOnly ? [] : TEST_KEYWORDS.filter(([, re]) => re.test(enquiryText)).map(([id]) => id);
   const unknownTests = !detailsOnly && UNOFFERED_TESTS.test(enquiryText) ? [enquiryText.match(UNOFFERED_TESTS)![0]] : [];
 
@@ -85,11 +93,12 @@ export function parseFallback(text: string, awaiting: Awaiting, sampleTypes: str
 
   // "Hi, I'm Asha from Spice Co, asha@…, GST …" → drop greeting, email, GST and labels; keep name and company.
   const intro = text
-    .replace(EMAIL_IN_TEXT, " ").replace(GSTIN_IN_TEXT, " ").replace(NO_GST, " ").replace(phoneMatch?.[0] ?? /$^/, " ").replace(CONTACT_LABELS, " ")
+    .replace(EMAIL_IN_TEXT, " ").replace(gstText ?? /$^/, " ").replace(NO_GST, " ").replace(phoneMatch?.[0] ?? /$^/, " ").replace(CONTACT_LABELS, " ")
     .replace(/^\s*(hi|hello|hey|good (morning|afternoon|evening)|namaskaram|namaste)[\s,!.]*/i, "")
     .replace(/\s*,(\s*,)+/g, ",").replace(/^[\s,.]+|[\s,.]+$/g, "");
   const talksAboutTests = testIds.length > 0 || sampleType !== null || unknownTests.length > 0;
-  const identity = awaiting === "identity" && intro && !(talksAboutTests && !/i am|i'm|this is|my name is/i.test(intro))
+  const identityResidue = intro.replace(/\b(i|we|our|my|have|has|am|are|is|do|not|yet|registered|for|a|an|number|registration)\b/gi, "").replace(/[\s,.:]+/g, "");
+  const identity = awaiting === "identity" && intro && (!noGst || identityResidue.length > 0) && !(talksAboutTests && !/i am|i'm|this is|my name is/i.test(intro))
     ? readIdentity(intro)
     : { name: null, company: null };
   return {

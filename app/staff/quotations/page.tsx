@@ -69,7 +69,7 @@ export default function StaffQuotations() {
           return <article className="card approval-card" key={q.id} aria-label={`Quotation ${q.id}`}>
             <div className="approval-heading"><h2>{q.id}</h2><b role="status">{STATUS[q.status] ?? q.status}</b></div>
             <p><b>{q.customerName}</b>{q.company && ` · ${q.company}`}</p>
-            <p>Phone: {q.phone ?? "not provided"} · GST: {q.gstNo ?? "No registration"}</p>
+            <p>Phone: {q.phone ?? "not provided"} · GST: {q.gstNo ?? "Not supplied"}</p>
             <p>Email: <b>{q.recipient}</b></p>
             <p>Identity: <b>{q.verification}</b>{q.needsStaff && " · Needs staff review"}</p>
             {q.flags.length > 0 && <ul>{q.flags.map((flag, i) => <li key={i}>{flag}</li>)}</ul>}

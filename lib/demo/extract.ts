@@ -36,6 +36,7 @@ function instructions(catalog: LabTest[], sampleTypes: string[], state: ConvStat
     "- intent: confirm (accepts/agrees to book), decline (not now/no), discount (asks for a lower price/discount/offer), faster_tat (asks for faster/urgent/express turnaround), greeting (only a greeting), enquiry (asks for or gives test details), other.",
     "- name / phone / company / email / gstNo: contact details when the customer gives them (gstNo = 15-character GSTIN as written). Otherwise null. phone is a phone number, never a sample count or GST number; preserve the country code.",
     "- noGst: true only if the customer says they have no GST registration.",
+    "- If the agent asked only for gstNo, a reply such as N/A, none, no GST or GST not available means noGst: true. Do not interpret such a reply or a GST number as the customer's name or phone.",
     "- When the message is the customer's contact details, do NOT take tests or sample types from the company name (e.g. 'Rajputana Chilli Industries' is a company, not a chilli sample).",
     `Conversation state: ${state}. The agent last asked for: ${awaiting ?? "nothing specific"}.`,
   ].join("\n");

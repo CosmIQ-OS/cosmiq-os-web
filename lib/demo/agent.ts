@@ -18,6 +18,7 @@ const emptyDraft = (): Draft => ({
   workflowVersion: 2,
   testIds: [], sampleType: null, samples: null, name: null, phone: null, company: null, email: null,
   gstNo: null, noGst: false, verification: "pending", verifyAttempts: 0, awaiting: "tests", quotationId: null, orderIds: [],
+  gstFormatAttempts: 0,
 });
 function detailChips(persona: Customer | null): Chip[] {
   if (!persona) return [{ label: "Send my details", text: "Asha Varma, phone +91 9876543210, GST 32AAGCS4821K1Z3" }];
@@ -64,7 +65,7 @@ async function verifyCustomer(input: Draft) {
       if (field === "gstNo") draft.noGst = false;
     }
     draft.verifyAttempts += 1;
-    draft.awaiting = "identity";
+    draft.awaiting = fields.length === 1 && fields[0] === "gstNo" ? "gstNo" : "identity";
     events.push({ kind: "db", label: "Details don't match record (attempt 1 of 2)", detail: fields.map((f) => FIELD_LABEL[f]).join(", ") });
     return { draft, customerId: null, proceed: false, reply: `The details don't match our records. Please re-check your ${listWords(fields.map((f) => FIELD_LABEL[f]))}.`, steps, result: "Details don't match", events, flags: [] as string[] };
   }
@@ -92,6 +93,11 @@ export async function handleMessage(conversationId: string, text: string): Promi
 
 async function processMessage(conversationId: string, text: string, token: string): Promise<boolean> {
   const conversation = (await getConversation(conversationId))!;
+  // Resume existing version-2 chats that were already asking only for GST before this fix.
+  if (conversation.state === "identify" && conversation.draft.workflowVersion === 2
+    && conversation.draft.name && conversation.draft.phone && !conversation.draft.gstNo && !conversation.draft.noGst) {
+    conversation.draft.awaiting = "gstNo";
+  }
   const [catalog, sampleTypes, gstRate, persona] = await Promise.all([
     getCatalog(), getSampleTypes(), getGstRate(), conversation.personaId ? getCustomer(conversation.personaId) : Promise.resolve(null),
   ]);
@@ -124,6 +130,10 @@ async function processMessage(conversationId: string, text: string, token: strin
   let pendingQuotation: PendingQuotation | undefined;
   let main = step.ask ?? "";
   meta.chips = draft.workflowVersion !== 2 ? [] : draft.awaiting === "identity" ? detailChips(persona) : step.chips;
+  if (draft.awaiting === "gstNo") meta.chips = [
+    ...(persona?.gstNo ? [{ label: "Send GST", text: `GST ${persona.gstNo}` }] : []),
+    { label: "No GST registration", text: "NO GST" },
+  ];
   if (draft.awaiting === "email") meta.chips = [{ label: "Send email", text: persona?.email ?? "asha.varma@spiceroute.example" }];
   if (step.action === "submit") {
     const quote = buildQuote(draft.testIds.map((id) => catalog.find((t) => t.id === id)!), draft.sampleType!, draft.samples!, gstRate);

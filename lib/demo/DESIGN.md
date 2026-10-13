@@ -15,6 +15,9 @@ This is simpler to deploy here; automatic background retries would require new s
 - `extract.ts` / `parse-fallback.ts`: message -> sanitized fields. Gemini timeout falls back to keyword rules.
 - `workflow.ts`: pure transitions and catalogue/sample validation. `requesting -> identify -> collecting
   -> confirming -> email -> pending_approval`. Selection changes invalidate confirmation. Terminal drafts freeze.
+  Identity uses a dedicated GST-only awaiting step; an optional format-attempt counter defaults to zero
+  for existing version-2 drafts. Two unreadable GST replies hand over for staff verification, never automatic
+  verification. Name and valid phone remain required; GST replies cannot overwrite the collected name.
 - `verify.ts`: record matching for full name, normalized phone and GST. No email requirement, AI judgement or OTP.
 - `agent.ts`: loads records, executes verification, persists messages/trace and deterministic pending quotes.
 - `pricing.ts`: database-backed numbers only. `pdf.ts`: quotation rendering; prototype labels are preserved.
@@ -28,7 +31,9 @@ This is simpler to deploy here; automatic background retries would require new s
 
 ## Failures / lifecycle
 No match hides history and requires staff review. Invalid details are still missing. Offline AI does not stop
-the workflow. Missing sender settings leave pending intact. Approval snapshots the PDF/from/recipient; retries
+the workflow. GST whitespace/hyphens are normalised, explicit non-registration and contextual N/A replies
+are recognised, and repeated unreadable GST is staff-reviewed instead of prompting indefinitely. Missing
+sender settings leave pending intact. Approval snapshots the PDF/from/recipient; retries
 use the same provider key and bytes. CAS prevents overlapping sends; expired send leases permit manual retry.
 Provider errors are visible, not success. Completion writes require the current attempt token, so delayed
 failures cannot overwrite a reclaimed attempt. A post-acceptance DB failure leaves `sending` for idempotent recovery.

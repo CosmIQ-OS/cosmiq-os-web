@@ -75,21 +75,39 @@ export function nextStep(ctx: Ctx, ex: Extraction): Step {
     state = "identify";
   }
   if (state === "identify") {
-    if (ex.name) draft.name = ex.name;
-    if (ex.phone) {
+    // A GST-only answer must never overwrite an already collected name or phone, even if AI mislabels it.
+    if (ex.name && ctx.draft.awaiting !== "gstNo") draft.name = ex.name;
+    if (ex.phone && ctx.draft.awaiting !== "gstNo") {
       if (validPhone(ex.phone)) draft.phone = normalisePhone(ex.phone);
       else notes.push("Please enter a valid phone number including the country code.");
     }
     if (ex.gstNo) {
       const gst = normaliseGst(ex.gstNo);
-      if (GSTIN.test(gst)) { draft.gstNo = gst; draft.noGst = false; }
-      else notes.push(`"${ex.gstNo}" doesn't look like a GST number. A GSTIN has 15 characters.`);
+      if (GSTIN.test(gst)) { draft.gstNo = gst; draft.noGst = false; draft.gstFormatAttempts = 0; }
+      else {
+        draft.gstNo = null;
+        draft.gstFormatAttempts = (draft.gstFormatAttempts ?? 0) + 1;
+        notes.push(`"${ex.gstNo}" doesn't look like a GST number. A GSTIN has 15 characters.`);
+      }
     }
-    if (ex.noGst) { draft.noGst = true; draft.gstNo = null; }
+    if (ex.noGst) { draft.noGst = true; draft.gstNo = null; draft.gstFormatAttempts = 0; }
+    else if (!ex.gstNo && ctx.draft.awaiting === "gstNo" && !["greeting", "discount", "faster_tat"].includes(ex.intent)
+      && !ex.testIds.length && !ex.sampleType && ex.samples === null) {
+      draft.gstFormatAttempts = (draft.gstFormatAttempts ?? 0) + 1;
+    }
+    const handOverGst = !draft.gstNo && !draft.noGst && (draft.gstFormatAttempts ?? 0) >= 2;
+    if (handOverGst) {
+      // Force record mismatches to the existing unverified/staff path, not another GST retry.
+      draft.verifyAttempts = Math.max(1, draft.verifyAttempts);
+      flags.push("GST unreadable or not supplied after two attempts");
+      notes.push("I couldn't read a valid GST number after two attempts. I'll ask staff to review the GST details and continue with your service request.");
+    }
     const missing = [!draft.name && "full name", !draft.phone && "phone number (including country code)",
-      !draft.gstNo && !draft.noGst && "GST number"].filter((f): f is string => !!f);
-    draft.awaiting = "identity";
-    if (missing.length) return done({ state, ask: `To verify you, please share your ${listWords(missing)}.` });
+      !draft.gstNo && !draft.noGst && !handOverGst && "GST number"].filter((f): f is string => !!f);
+    draft.awaiting = missing.length === 1 && missing[0] === "GST number" ? "gstNo" : "identity";
+    if (missing.length) return done({ state, ask: draft.awaiting === "gstNo"
+      ? "Please share your 15-character GST number. If you are not GST-registered, reply NO GST or N/A."
+      : `To verify you, please share your ${listWords(missing)}.` });
     draft.awaiting = null;
     return done({ state, action: "verify" });
   }

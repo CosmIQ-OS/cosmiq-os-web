@@ -56,6 +56,18 @@ test("full domain flow retains multi-service request and sends no quotation/orde
   expect(quotation.approvedAt).toBeNull(); expect((await mail(quotation.id)).attempts).toHaveLength(0);
 });
 
+test("mixed available and unavailable services quote only catalogue items and require staff review", async () => {
+  const id = await startConversation(arun.id);
+  for (const text of ["aflatoxin and gluten for chilli, 2 samples", details, "Confirm", "mixed-service@example.com"]) await handleMessage(id, text);
+  const view = (await getConversationView(id))!;
+  const quotation = (await getQuotation(view.conversation.draft.quotationId!))!;
+  expect(quotation.quote.lines.map((line) => line.testId)).toEqual(["T002"]);
+  expect(view.conversation.needsStaff).toBe(true);
+  expect(view.events.some((e) => e.label.includes("gluten"))).toBe(true);
+  await expect(actOnQuotation(quotation.id, "approve", false)).rejects.toMatchObject({ status: 400 });
+  expect((await mail(quotation.id)).attempts).toHaveLength(0);
+});
+
 test("new/no-GST customer remains staff-reviewed and is not silently added to the verified database", async () => {
   const id = await startConversation(null);
   for (const text of ["micro for pepper, 1 sample", "Meera Menon, phone +91 9876543211, no GST", "Confirm", "meera@example.com"]) await handleMessage(id, text);
@@ -65,6 +77,68 @@ test("new/no-GST customer remains staff-reviewed and is not silently added to th
   const q = view.conversation.draft.quotationId!;
   await expect(actOnQuotation(q, "approve", false)).rejects.toMatchObject({ status: 400 });
   expect((await actOnQuotation(q, "approve", true)).status).toBe("sent");
+});
+
+test("split name/phone/GST messages accept formatted GST without a repeated prompt", async () => {
+  const id = await startConversation(arun.id);
+  for (const text of ["aflatoxin for chilli, 3 samples", arun.name, arun.phone, "32-LJSCM-3645-T1Z0"]) await handleMessage(id, text);
+  const view = (await getConversationView(id))!;
+  expect([view.conversation.state, view.conversation.draft.verification, view.conversation.draft.name, view.conversation.draft.gstNo])
+    .toEqual(["confirming", "verified", arun.name, arun.gstNo]);
+  expect(view.messages.at(-1)!.body).not.toContain("share your GST");
+});
+
+test("no-GST phrases retain the collected name and continue for staff review", async () => {
+  for (const reply of ["N/A", "none", "GST not available", "I have no GST"]) {
+    const id = await startConversation(null);
+    for (const text of ["aflatoxin for chilli, 3 samples", "Meera Menon", "+91 9876543211", reply]) await handleMessage(id, text);
+    const view = (await getConversationView(id))!;
+    expect([view.conversation.state, view.conversation.draft.name, view.conversation.draft.noGst], reply)
+      .toEqual(["confirming", "Meera Menon", true]);
+    expect(view.conversation.draft.verification).toBe("new"); expect(view.conversation.needsStaff).toBe(true);
+  }
+});
+
+test("repeated unreadable GST continues unverified and cannot be approved without staff review", async () => {
+  const id = await startConversation(arun.id);
+  for (const text of ["aflatoxin for chilli, 3 samples", arun.name, arun.phone, "GST 12345", "GST 12345"]) await handleMessage(id, text);
+  let view = (await getConversationView(id))!;
+  expect([view.conversation.state, view.conversation.draft.name, view.conversation.draft.verification])
+    .toEqual(["confirming", arun.name, "unverified"]);
+  expect(view.profile).toBeNull(); expect(view.conversation.needsStaff).toBe(true);
+  for (const text of ["Confirm", "gst-review@example.com"]) await handleMessage(id, text);
+  view = (await getConversationView(id))!;
+  await expect(actOnQuotation(view.conversation.draft.quotationId!, "approve", false)).rejects.toMatchObject({ status: 400 });
+  expect((await mail(view.conversation.draft.quotationId!)).attempts).toHaveLength(0);
+});
+
+test("existing version-2 GST-only chats resume without overwriting name on N/A", async () => {
+  const id = await startConversation(null);
+  for (const text of ["aflatoxin for chilli, 3 samples", "Meera Menon", "+91 9876543211"]) await handleMessage(id, text);
+  await query(`UPDATE demo_conversations SET draft = jsonb_set(draft, '{awaiting}', '"identity"'::jsonb) WHERE id = $1`, [id]);
+  await handleMessage(id, "N/A");
+  const view = (await getConversationView(id))!;
+  expect([view.conversation.state, view.conversation.draft.name, view.conversation.draft.noGst])
+    .toEqual(["confirming", "Meera Menon", true]);
+});
+
+test("registered-customer no-GST mismatch has one retry then staff handover, not an endless loop", async () => {
+  const id = await startConversation(arun.id);
+  for (const text of ["aflatoxin for chilli, 3 samples", arun.name, arun.phone, "N/A"]) await handleMessage(id, text);
+  const retry = (await getConversationView(id))!;
+  expect([retry.conversation.state, retry.conversation.draft.awaiting]).toEqual(["identify", "gstNo"]);
+  await handleMessage(id, "N/A");
+  const view = (await getConversationView(id))!;
+  expect([view.conversation.state, view.conversation.draft.name, view.conversation.draft.verification])
+    .toEqual(["confirming", arun.name, "unverified"]);
+});
+
+test("numeric GST mistakes and a greeting preserve identity until a valid GST correction", async () => {
+  const id = await startConversation(arun.id);
+  for (const text of ["aflatoxin for chilli, 3 samples", arun.name, arun.phone, "Hello", "12345678901234", arun.gstNo]) await handleMessage(id, text);
+  const view = (await getConversationView(id))!;
+  expect([view.conversation.state, view.conversation.draft.name, view.conversation.draft.phone, view.conversation.draft.verification])
+    .toEqual(["confirming", arun.name, arun.phone.replace(/\D/g, ""), "verified"]);
 });
 
 test("invalid email and changed selections cannot bypass explicit confirmation", async () => {
@@ -166,6 +240,30 @@ test("an ambiguous provider failure retries the same payload without creating a 
   expect(retried.providerId).toBe(first.accepted.id);
   const final = await mail(q.id);
   expect(final.attempts).toHaveLength(2); expect(final.attempts[0]).toEqual(final.attempts[1]);
+});
+
+test("sender configuration changes cannot alter the persisted payload during retry", async () => {
+  const q = await submitted("fail-once-sender-change@example.com");
+  await expect(actOnQuotation(q.id, "approve", false)).rejects.toMatchObject({ status: 502 });
+  const originalFrom = process.env.QUOTATION_EMAIL_FROM;
+  try {
+    process.env.QUOTATION_EMAIL_FROM = "Another sender <changed@example.com>";
+    expect((await actOnQuotation(q.id, "retry", false)).status).toBe("sent");
+  } finally { process.env.QUOTATION_EMAIL_FROM = originalFrom; }
+  const captured = await mail(q.id);
+  expect(captured.attempts).toHaveLength(2);
+  expect(captured.attempts[0]).toEqual(captured.attempts[1]);
+  expect(captured.accepted.payload.from).toBe(originalFrom);
+});
+
+test("a sent quotation cannot subsequently be rejected or sent a second time", async () => {
+  const q = await submitted("sent-state-safeguard@example.com");
+  const accepted = await actOnQuotation(q.id, "approve", false);
+  await expect(actOnQuotation(q.id, "reject", false, "Too late")).rejects.toMatchObject({ status: 409 });
+  const repeated = await actOnQuotation(q.id, "retry", false);
+  expect(repeated.providerId).toBe(accepted.providerId);
+  expect((await mail(q.id)).attempts).toHaveLength(1);
+  expect((await getQuotation(q.id))!.status).toBe("sent");
 });
 
 test("stale sending lease recovers after a crash with the same stored PDF/key", async () => {

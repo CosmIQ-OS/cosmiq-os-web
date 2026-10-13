@@ -52,7 +52,7 @@ export interface Extraction {
 
 export type ConvState = "requesting" | "identify" | "collecting" | "confirming" | "email" | "pending_approval";
 export type Verification = "pending" | "verified" | "new" | "unverified";
-export type Awaiting = "identity" | "tests" | "sampleType" | "samples" | "confirm" | "email" | null;
+export type Awaiting = "identity" | "gstNo" | "tests" | "sampleType" | "samples" | "confirm" | "email" | null;
 
 export interface Draft {
   workflowVersion: 2;
@@ -67,6 +67,7 @@ export interface Draft {
   noGst: boolean;
   verification: Verification;
   verifyAttempts: number;
+  gstFormatAttempts?: number; // optional for version-2 conversations created before the bounded GST step
   awaiting: Awaiting;
   quotationId: string | null;
   orderIds: string[];

@@ -93,3 +93,37 @@ provider delivery webhooks or phone OTP are added. Provider acceptance is shown 
 - Live Resend, hosted Neon, Gemini and WhatsApp/LIMS were not exercised: no provider/sender credentials
   were configured locally. Automated sending used only the loopback capture server. Production
   publication is a separate verification checkpoint using the existing GitHub Actions/Vercel pipeline.
+
+## Follow-up retest scope (user request)
+- Expand tests for malformed/non-object JSON, unknown customers, message limits, session expiry,
+  tampering, cross-purpose cookies, declined/repeated confirmations and corrected unsupported samples.
+- Add boundary-count/duplicate-service checks and real-DB approval tests for mixed unsupported services,
+  immutable sender across retries, and rejection after sending.
+- Confirmed defects: malformed conversation JSON currently creates a new chat (201), and a well-formed
+  but absent customer ID returns 500. Fix shared JSON parsing to reject arrays; conversation creation must
+  require an object body and return 404 for an absent record before calling the agent.
+- Preserve existing valid `{customerId: null}` / `{customerId: 'C001'}` behaviour, all state-machine rules,
+  authentication, pricing and approval invariants. No production reset or real-email send during retesting.
+- Verify targeted failing tests, then typecheck/build/full suite and non-destructive live smoke checks.
+
+## GST-loop investigation and fix
+User reported repeated GST prompts. Parser regression tests confirm separator-formatted GST numbers are
+discarded and phrases such as "GST not available" are not recognised. The latter can also overwrite the
+already collected name. A valid plain GST and standard "no GST" are the controls.
+- Add a specific `gstNo` awaiting step when name/phone are present and only GST is missing.
+- Normalise valid copy-pasted GST separators before validation; recognise explicit non-registration
+  phrases and contextual N/A/none replies without treating them as names.
+- Add optional `gstFormatAttempts` to version-2 drafts (default zero for existing chats). Two unreadable
+  GST replies hand over GST verification to staff instead of indefinitely prompting. Name and valid phone
+  remain mandatory. Missing/unreadable GST must never result in an automatically verified customer.
+- Preserve deterministic catalogue/pricing/approval rules. Staff must review incomplete/unverified identity
+  before email approval. No OTP or new identity provider is added.
+- Verify parser forms, split-field flows, no-GST replies, retained names, valid correction after one bad
+  reply, bounded invalid-reply handover, mismatch retry limits and existing regression suite.
+- Live diagnostic confirmed Gemini initially reads valid messages, then hits a rate limit. The deployed
+  fallback repeats GST prompts for hyphenated GST, GST-not-available, N/A and invalid GST. Diagnostic chats
+  use seeded/fictional identities only; no quotation, order or email was created.
+- Expanded local production build/typecheck and regression run: 114 passed; 52 intentional duplicate/device
+  skips. Covers the GST handover and resumption paths as well as the two JSON/customer validation fixes.
+- Review follow-ups fixed and regression-tested: GST-only numeric replies cannot overwrite the saved phone;
+  greetings/discounts/urgency retain their intents and do not consume GST format attempts.

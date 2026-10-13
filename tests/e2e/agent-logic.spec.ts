@@ -160,3 +160,23 @@ test("invalid email cannot submit a quotation", () => {
     expect(result.state).toBe("email"); expect(result.action).toBeNull();
   }
 });
+
+test("sample count boundaries 1 and 50 are accepted but still need explicit confirmation", () => {
+  for (const samples of [1, 50]) {
+    const result = nextStep(ctx(), ex({ testIds: ["T002"], sampleType: "chilli", samples }));
+    expect([result.state, result.action, result.draft.samples]).toEqual(["confirming", null, samples]);
+  }
+});
+
+test("duplicate service mentions do not create duplicate quotation lines", () => {
+  const result = nextStep(ctx(), ex({ testIds: ["T002", "T002", "T001"], sampleType: "pepper", samples: 3 }));
+  expect(result.draft.testIds).toEqual(["T002", "T001"]);
+});
+
+test("a discount or urgent request cannot double as confirmation", () => {
+  const selected = draft({ testIds: ["T001"], sampleType: "Turmeric Powder", samples: 2, awaiting: "confirm" });
+  for (const intent of ["discount", "faster_tat"] as const) {
+    const result = nextStep(ctx({ state: "confirming", draft: selected }), ex({ intent }));
+    expect(result.state).toBe("confirming"); expect(result.action).toBeNull(); expect(result.flags).toHaveLength(1);
+  }
+});
