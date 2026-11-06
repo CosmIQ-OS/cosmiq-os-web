@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Archivo_Black, Inter, JetBrains_Mono } from "next/font/google";
 import MobileMenu from "@/components/MobileMenu";
-import { TandemFooterWordmark } from "@/components/TandemInteractive";
+import { TandemAsciiWordmark } from "@/components/TandemInteractive";
 import { NAV, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -47,7 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <nav className="flinks" aria-label="Footer">
               <a href="/demo">Demo</a><a href="/contact">Contact</a><a href="/privacy">Privacy</a>
             </nav>
-            <TandemFooterWordmark word="COSMIQ" />
+            <TandemAsciiWordmark word="COSMIQ" variant="footer" />
             <p className="copy">© 2026 CosmIQ · Built for labs that quote, test and report.</p>
           </div>
         </footer>

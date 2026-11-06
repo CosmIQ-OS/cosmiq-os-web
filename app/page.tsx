@@ -1,5 +1,5 @@
 import LeadForm from "@/components/LeadForm";
-import { TandemAsciiBackdrop } from "@/components/TandemInteractive";
+import { TandemAsciiWordmark, TandemOdometer, TandemTerminalTabs } from "@/components/TandemInteractive";
 
 const ENQUIRY_FLOW = [
   { h: "Request on WhatsApp", p: "A customer asks for a test in their own words, any time of day." },
@@ -53,30 +53,36 @@ export default function Home() {
   return (
     <>
       <section className="hero">
-        <TandemAsciiBackdrop />
-        <div className="wrap hero-in">
-          <div>
-            <span className="tag acc dot">For food &amp; testing labs</span>
-            <h1>WhatsApp enquiry to quotation. <span className="hl">No guesswork.</span></h1>
-            <p className="sub">AI agents on top of your LIMS that answer customer enquiries, prepare accurate quotations and draft follow-ups. <b>Your LIMS stays the source of truth. Your staff approve what matters.</b></p>
-            <div className="hero-btns">
-              <a href="/contact" className="btn">Request a pilot →</a>
-              <a href="#workflow" className="btn ghost">See how it works</a>
-            </div>
-            <p className="hero-note">Web-chat pilot first · WhatsApp next · deeper LIMS automation after</p>
-          </div>
+        <div className="wrap hero-stack">
+          <TandemAsciiWordmark word="COSMIQ" variant="hero" />
 
-          <div className="panel" aria-label="Illustrative enquiry to quotation">
-            <div className="panel-h"><span>● WhatsApp enquiry</span><span>Illustrative</span></div>
-            <div className="panel-b">
-              <p className="bubble in"><small>Customer</small>Need pesticide residue testing for 2 samples of basmati rice. How much?</p>
-              <p className="check">✓ LIMS: service available · method on file · TAT 5 working days</p>
-              <p className="bubble out"><small>CosmIQ agent</small>Sure. Is this for export or domestic compliance? And roughly how much sample can you send?</p>
-              <p className="bubble in"><small>Customer</small>Export. 500 g each.</p>
-              <div className="quote" aria-label="Quotation summary">
-                <div className="quote-row"><span>Pesticide residue panel × 2</span><span>from LIMS</span></div>
-                <div className="quote-row"><span>Tax</span><span>by backend</span></div>
-               <div className="quote-row total"><span>QUOTE #Q-0142</span><span>AWAITING APPROVAL</span></div>
+          <div className="hero-in">
+            <div>
+              <div className="hero-meta-row">
+                <span className="tag acc dot">For food &amp; testing labs</span>
+                <TandemOdometer target={1482} label="LIMS checks verified" />
+              </div>
+              <h1>WhatsApp enquiry to quotation. <span className="hl">No guesswork.</span></h1>
+              <p className="sub">AI agents on top of your LIMS that answer customer enquiries, prepare accurate quotations and draft follow-ups. <b>Your LIMS stays the source of truth. Your staff approve what matters.</b></p>
+              <div className="hero-btns">
+                <a href="/contact" className="btn">Request a pilot →</a>
+                <a href="#workflow" className="btn ghost">See how it works</a>
+              </div>
+              <p className="hero-note">Web-chat pilot first · WhatsApp next · deeper LIMS automation after</p>
+            </div>
+
+            <div className="panel" aria-label="Illustrative enquiry to quotation">
+              <div className="panel-h"><span>● WhatsApp enquiry</span><span>Illustrative</span></div>
+              <div className="panel-b">
+                <p className="bubble in"><small>Customer</small>Need pesticide residue testing for 2 samples of basmati rice. How much?</p>
+                <p className="check">✓ LIMS: service available · method on file · TAT 5 working days</p>
+                <p className="bubble out"><small>CosmIQ agent</small>Sure. Is this for export or domestic compliance? And roughly how much sample can you send?</p>
+                <p className="bubble in"><small>Customer</small>Export. 500 g each.</p>
+                <div className="quote" aria-label="Quotation summary">
+                  <div className="quote-row"><span>Pesticide residue panel × 2</span><span>from LIMS</span></div>
+                  <div className="quote-row"><span>Tax</span><span>by backend</span></div>
+                  <div className="quote-row total"><span>QUOTE #Q-0142</span><span>AWAITING APPROVAL</span></div>
+                </div>
               </div>
             </div>
           </div>
@@ -115,8 +121,8 @@ export default function Home() {
                 <li>Receives customer requests on WhatsApp</li>
                 <li>Checks service availability in your LIMS</li>
                 <li>Collects only the missing details</li>
-                 <li>Confirms services and sample counts, then collects email</li>
-                 <li>Prepares a quotation for staff approval and email delivery</li>
+                <li>Confirms services and sample counts, then collects email</li>
+                <li>Prepares a quotation for staff approval and email delivery</li>
               </ul>
             </article>
             <article className="card agent a">
@@ -198,6 +204,7 @@ export default function Home() {
           <p className="kicker"><span>07</span>Pilot</p>
           <h2>Start lean. Prove it. Then scale.</h2>
           <p className="lede">We prove the full enquiry → information collection → quotation loop before touching live customer channels.</p>
+          <TandemTerminalTabs />
           <div className="steps">
             <div className="step"><b>1</b><h3>Web-chat pilot</h3><p>Run the complete enquiry-to-quotation workflow in a web chat, against your real service data.</p></div>
             <div className="step"><b>2</b><h3>Connect WhatsApp</h3><p>Move the proven workflow onto your WhatsApp Business number.</p></div>
