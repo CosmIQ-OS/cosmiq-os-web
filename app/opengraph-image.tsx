@@ -7,31 +7,35 @@ export const alt = "CosmIQ: WhatsApp enquiry to quotation for food & testing lab
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-const INK = "#0a0a0a", PAPER = "#f4f1ea", ORANGE = "#ff5a1f", YELLOW = "#ffd400";
+const BG = "#000000", SURFACE = "#0d0d10", BORDER = "#27272a", WHITE = "#ffffff", MUTED = "#a1a1aa", RED = "#ff3b30", GREEN = "#30d158";
 
 export default async function Image() {
   const font = await readFile(join(process.cwd(), "assets/fonts/SpaceGrotesk-Bold.ttf"));
   return new ImageResponse(
     (
-      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", background: PAPER, color: INK, border: `16px solid ${INK}`, padding: "48px 56px", fontFamily: "Space Grotesk" }}>
+      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", background: BG, color: WHITE, border: `2px solid ${BORDER}`, padding: "52px 64px", fontFamily: "Space Grotesk" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 20, fontSize: 46 }}>
-            <div style={{ width: 46, height: 46, background: ORANGE, border: `5px solid ${INK}`, boxShadow: `6px 6px 0 ${INK}` }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 18, fontSize: 42, letterSpacing: -1 }}>
+            <div style={{ width: 46, height: 46, borderRadius: 10, background: SURFACE, border: `2px solid ${BORDER}`, display: "flex", alignItems: "center", justifyContent: "center", color: WHITE, fontSize: 26 }}>
+              C
+            </div>
             CosmIQ
           </div>
-          <div style={{ display: "flex", background: ORANGE, border: `4px solid ${INK}`, padding: "10px 18px", fontSize: 24, letterSpacing: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, background: SURFACE, border: `2px solid ${BORDER}`, borderRadius: 999, padding: "10px 22px", fontSize: 20, color: WHITE, letterSpacing: 1 }}>
+            <div style={{ width: 10, height: 10, borderRadius: 999, background: RED }} />
             FOR FOOD &amp; TESTING LABS
           </div>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", fontSize: 96, lineHeight: 1, letterSpacing: -3 }}>
-          <div style={{ display: "flex" }}>WHATSAPP ENQUIRY</div>
-          <div style={{ display: "flex" }}>TO QUOTATION.</div>
-          <div style={{ display: "flex", marginTop: 8 }}>
-            <div style={{ display: "flex", background: YELLOW, padding: "0 14px" }}>NO GUESSWORK.</div>
+        <div style={{ display: "flex", flexDirection: "column", fontSize: 88, lineHeight: 1.02, letterSpacing: -3 }}>
+          <div style={{ display: "flex", color: WHITE }}>WHATSAPP ENQUIRY</div>
+          <div style={{ display: "flex", color: WHITE }}>TO QUOTATION.</div>
+          <div style={{ display: "flex", marginTop: 12 }}>
+            <div style={{ display: "flex", background: WHITE, color: BG, padding: "2px 18px", borderRadius: 8 }}>NO GUESSWORK.</div>
           </div>
         </div>
-        <div style={{ display: "flex", borderTop: `4px solid ${INK}`, paddingTop: 20, fontSize: 28 }}>
-          AI agents on top of your LIMS · prices from your data · staff approve
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: `2px solid ${BORDER}`, paddingTop: 22, fontSize: 24, color: MUTED }}>
+          <div style={{ display: "flex" }}>AI agents on top of your LIMS · prices from your data · staff approve</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, color: GREEN, fontSize: 20 }}>● LIMS VERIFIED</div>
         </div>
       </div>
     ),

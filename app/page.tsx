@@ -1,4 +1,5 @@
 import LeadForm from "@/components/LeadForm";
+import { TandemAsciiBackdrop } from "@/components/TandemInteractive";
 
 const ENQUIRY_FLOW = [
   { h: "Request on WhatsApp", p: "A customer asks for a test in their own words, any time of day." },
@@ -52,6 +53,7 @@ export default function Home() {
   return (
     <>
       <section className="hero">
+        <TandemAsciiBackdrop />
         <div className="wrap hero-in">
           <div>
             <span className="tag acc dot">For food &amp; testing labs</span>
