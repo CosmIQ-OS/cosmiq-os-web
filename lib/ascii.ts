@@ -10,15 +10,15 @@ export const prefersReducedMotion = () =>
   typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /** Page colours, read from the CSS tokens so the canvases follow the theme. */
-export const theme = { bg: "#000000", fg: "#F8FAFD", dim: "#8E918F", mono: "monospace", display: "sans-serif" };
+export const theme = { bg: "#f4f1ea", fg: "#0a0a0a", dim: "#4a4740", mono: "monospace", display: "sans-serif" };
 
 export function refreshTheme() {
   if (typeof window === "undefined") return;
   const cs = getComputedStyle(document.documentElement);
   const read = (name: string, fallback: string) => cs.getPropertyValue(name).trim() || fallback;
-  theme.bg = read("--black", "#000000");
-  theme.fg = read("--white", "#F8FAFD");
-  theme.dim = read("--gray-1", "#8E918F");
+  theme.bg = read("--black", "#f4f1ea");
+  theme.fg = read("--white", "#0a0a0a");
+  theme.dim = read("--gray-1", "#4a4740");
   theme.mono = read("--font-mono", "monospace");
   theme.display = read("--font-display", "sans-serif");
 }

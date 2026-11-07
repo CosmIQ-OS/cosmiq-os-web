@@ -7,7 +7,7 @@ export const alt = "CosmIQ: WhatsApp enquiry to quotation for food & testing lab
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-const BG = "#000000", SURFACE = "#0d0d10", BORDER = "#27272a", WHITE = "#ffffff", MUTED = "#a1a1aa", RED = "#ff3b30", GREEN = "#30d158";
+const BG = "#f4f1ea", SURFACE = "#ebe6da", BORDER = "#d8d2c4", WHITE = "#0a0a0a", MUTED = "#4a4740", RED = "#ff5a1f", GREEN = "#146c3a";
 
 export default async function Image() {
   const font = await readFile(join(process.cwd(), "assets/fonts/SpaceGrotesk-Bold.ttf"));
@@ -30,7 +30,7 @@ export default async function Image() {
           <div style={{ display: "flex", color: WHITE }}>WHATSAPP ENQUIRY</div>
           <div style={{ display: "flex", color: WHITE }}>TO QUOTATION.</div>
           <div style={{ display: "flex", marginTop: 12 }}>
-            <div style={{ display: "flex", background: WHITE, color: BG, padding: "2px 18px", borderRadius: 8 }}>NO GUESSWORK.</div>
+            <div style={{ display: "flex", background: RED, color: "#ffffff", padding: "2px 18px", borderRadius: 8 }}>NO GUESSWORK.</div>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: `2px solid ${BORDER}`, paddingTop: 22, fontSize: 24, color: MUTED }}>

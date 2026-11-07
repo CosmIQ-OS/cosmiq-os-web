@@ -1,14 +1,20 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { refreshTheme } from "@/lib/ascii";
 
 export default function Nav() {
-  const [themeName, setThemeName] = useState<"Light" | "Dark">("Light");
+  const [themeName, setThemeName] = useState<"Light" | "Dark">("Dark");
 
   useEffect(() => {
     const root = document.documentElement;
-    const currentTheme = root.dataset.theme === "light" ? "light" : "dark";
-    setThemeName(currentTheme === "dark" ? "Light" : "Dark");
+    const saved = typeof window !== "undefined" ? localStorage.getItem("tandem-theme") : null;
+    if (saved === "dark") {
+      root.dataset.theme = "dark";
+    }
+    const isDark = root.dataset.theme === "dark";
+    setThemeName(isDark ? "Light" : "Dark");
+    refreshTheme();
 
     const nav = document.querySelector(".nav") as HTMLElement | null;
     const secure = document.querySelector(".secure") as HTMLElement | null;
@@ -37,12 +43,18 @@ export default function Nav() {
 
   function toggleTheme() {
     const root = document.documentElement;
-    const next = root.dataset.theme === "light" ? "dark" : "light";
-    root.dataset.theme = next;
+    const isDark = root.dataset.theme === "dark";
+    const next = isDark ? "light" : "dark";
+    if (next === "light") {
+      delete root.dataset.theme;
+    } else {
+      root.dataset.theme = "dark";
+    }
     try {
       localStorage.setItem("tandem-theme", next);
     } catch {}
     setThemeName(next === "dark" ? "Light" : "Dark");
+    refreshTheme();
   }
 
   return (
