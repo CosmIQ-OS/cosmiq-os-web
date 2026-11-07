@@ -3,7 +3,6 @@ import Link from "next/link";
 import MobileMenu from "@/components/MobileMenu";
 import Splash from "@/components/tandem/Splash";
 import ScrollReveals from "@/components/tandem/ScrollReveals";
-import FooterWordmark from "@/components/tandem/FooterWordmark";
 import { NAV, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -68,7 +67,6 @@ try {
         <main id="main">{children}</main>
 
         <footer>
-          <FooterWordmark word="CosmIQ" />
           <div className="wrap foot-row">
             <span>CosmIQ Agentic Automation for food &amp; testing labs. Deterministic LIMS sync.</span>
             <ul>

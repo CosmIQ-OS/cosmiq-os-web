@@ -493,8 +493,8 @@ footer { background: var(--black); }
 }
 .foot-row {
   display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px;
-  padding: 28px var(--gutter) 36px;
-  margin-top: 3vw; font: 400 15px var(--text); color: var(--gray-1);
+  padding: 32px var(--gutter) 36px;
+  font: 400 15px var(--text); color: var(--gray-1);
   border-top: 1px solid var(--gray-2);
 }
 .foot-row ul { display: flex; flex-wrap: wrap; gap: 24px; list-style: none; }
