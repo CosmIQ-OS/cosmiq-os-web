@@ -1,14 +1,11 @@
 import type { Metadata } from "next";
-import { Archivo_Black, Inter, JetBrains_Mono } from "next/font/google";
+import Link from "next/link";
 import MobileMenu from "@/components/MobileMenu";
-import { TandemAsciiWordmark } from "@/components/TandemInteractive";
+import Splash from "@/components/tandem/Splash";
+import ScrollReveals from "@/components/tandem/ScrollReveals";
+import FooterWordmark from "@/components/tandem/FooterWordmark";
 import { NAV, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
-
-// Self-hosted at build time: no font requests from visitors' browsers to Google.
-const inter = Inter({ subsets: ["latin"], variable: "--font-body", display: "swap" });
-const archivo = Archivo_Black({ subsets: ["latin"], weight: "400", variable: "--font-head", display: "swap" });
-const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-mono", display: "swap" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -20,35 +17,78 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${archivo.variable} ${mono.variable}`}>
+    <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist:wght@300..800&family=Geist+Mono:wght@400..700&display=swap"
+          rel="stylesheet"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+try { const t = localStorage.getItem("tandem-theme"); if (t) document.documentElement.dataset.theme = t; } catch {}
+try { if (!sessionStorage.getItem("cosmiq-splash") && location.pathname === "/" && !location.hash && !matchMedia("(prefers-reduced-motion: reduce)").matches) document.documentElement.classList.add("splash"); } catch {}
+            `,
+          }}
+        />
+      </head>
       <body>
-        <a className="skip" href="#main">Skip to content</a>
-        <header className="nav">
-          <div className="wrap nav-in">
-            <a className="logo" href="/"><span className="logo-mark" aria-hidden="true">C</span>CosmIQ</a>
+        <a className="skip" href="#main">
+          Skip to content
+        </a>
+        <Splash word="CosmIQ" />
+        <ScrollReveals />
+
+        <header className="nav" aria-label="Main">
+          <div className="nav-in">
+            <Link className="wordmark" href="/">
+              CosmIQ
+            </Link>
             <nav className="links" aria-label="Primary">
-              {NAV.map((l) => <a key={l.href} href={l.href}>{l.label}</a>)}
+              {NAV.map((l) => (
+                <Link key={l.href} href={l.href}>
+                  {l.label}
+                </Link>
+              ))}
             </nav>
             <div className="nav-end">
-              <a href="/contact" className="btn btn-sm nav-cta">
-                <span className="long">Request a pilot →</span><span className="short">Contact</span>
-              </a>
+              <Link href="/contact" className="btn btn-sm nav-cta">
+                <span className="long">Request a pilot →</span>
+                <span className="short">Contact</span>
+              </Link>
               <MobileMenu links={NAV} />
             </div>
           </div>
         </header>
+
         <main id="main">{children}</main>
+
         <footer>
-          <div className="wrap foot">
-            <div>
-              <a className="logo" href="/"><span className="logo-mark" aria-hidden="true">C</span>CosmIQ</a>
-              <p>Agentic automation for food &amp; testing labs. Your LIMS stays the source of truth. Your staff stay in control.</p>
-            </div>
-            <nav className="flinks" aria-label="Footer">
-              <a href="/demo">Demo</a><a href="/contact">Contact</a><a href="/privacy">Privacy</a>
-            </nav>
-            <TandemAsciiWordmark word="COSMIQ" variant="footer" />
-            <p className="copy">© 2026 CosmIQ · Built for labs that quote, test and report.</p>
+          <FooterWordmark word="CosmIQ" />
+          <div className="wrap foot-row">
+            <span>CosmIQ Agentic Automation for food &amp; testing labs. Deterministic LIMS sync.</span>
+            <ul>
+              <li>
+                <Link href="/#agents">Agents</Link>
+              </li>
+              <li>
+                <Link href="/#workflow">Workflow</Link>
+              </li>
+              <li>
+                <Link href="/demo">Demo</Link>
+              </li>
+              <li>
+                <Link href="/#guardrails">Guardrails</Link>
+              </li>
+              <li>
+                <Link href="/contact">Request pilot</Link>
+              </li>
+              <li>
+                <Link href="/privacy">Privacy</Link>
+              </li>
+            </ul>
           </div>
         </footer>
       </body>
