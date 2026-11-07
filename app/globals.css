@@ -432,6 +432,7 @@ input:focus, textarea:focus { outline: none; border-color: var(--white); }
 .checks label:has(input:checked) { background: var(--white); color: var(--black); }
 .checks input { width: 18px; height: 18px; min-height: 0; accent-color: var(--black); }
 .field-err { color: var(--red); font-size: 13px; font-weight: 600; margin-top: 4px; display: block; }
+.formmsg:empty { display: none; }
 .formmsg { padding: 12px 16px; border: 1px solid var(--white); font-weight: 600; font-size: 15px; }
 .formmsg.ok { background: var(--white); color: var(--black); }
 .formmsg.err { border-color: var(--red); color: var(--red); }
