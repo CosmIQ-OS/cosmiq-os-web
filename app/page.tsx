@@ -1,8 +1,6 @@
 import Link from "next/link";
 import LeadForm from "@/components/LeadForm";
 import HeroArt from "@/components/tandem/HeroArt";
-import FieldBand from "@/components/tandem/FieldBand";
-import SignalBand from "@/components/tandem/SignalBand";
 import Statement from "@/components/tandem/Statement";
 import Odometer from "@/components/tandem/Odometer";
 import CommandLine from "@/components/tandem/CommandLine";
@@ -82,8 +80,6 @@ export default function Home() {
         </ul>
       </section>
 
-      <FieldBand />
-
       <Statement
         lines={[
           ["Not a", "guess."],
@@ -92,8 +88,6 @@ export default function Home() {
         ]}
         note="Your laboratory runs on precision. CosmIQ talks to customers in natural language, while all services, test parameters, turnaround times and prices are fetched strictly from your LIMS database."
       />
-
-      <SignalBand seed={1.4} />
 
       <section className="ways" id="agents" aria-labelledby="waysTitle">
         <div className="wrap">
@@ -120,8 +114,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      <SignalBand seed={2.8} />
 
       <section className="install" id="workflow" aria-labelledby="installTitle">
         <div className="wrap">
@@ -252,8 +244,6 @@ export default function Home() {
           </table>
         </div>
       </section>
-
-      <SignalBand seed={4.2} />
 
       <section className="install" id="faq" aria-labelledby="faqTitle">
         <div className="wrap">
