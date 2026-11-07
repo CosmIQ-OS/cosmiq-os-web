@@ -88,3 +88,4 @@ export default function SignalBand({ seed = 1 }: { seed?: number }) {
     </div>
   );
 }
+

@@ -59,7 +59,7 @@ export default function Splash({ word = "CosmIQ" }: { word?: string }) {
       let radius = 0;
       if (phase === "rippling" && now >= reveal0) {
         const far = Math.max(...[[0, 0], [A.W, 0], [0, A.H], [A.W, A.H]].map(([x, y]) => Math.hypot(x - ox, y - oy))) + 80;
-        const k = (now - reveal0) / 800;
+        const k = (now - reveal0) / 600;
         if (k >= 1) return finish();
         radius = Math.max(1, easeReveal(k) * far);
       }
@@ -97,13 +97,16 @@ export default function Splash({ word = "CosmIQ" }: { word?: string }) {
     }
 
     function startRipple(x: number, y: number) {
+      if (phase === "rippling") {
+        return finish();
+      }
       if (phase !== "waiting") return;
       clearTimeout(autoTimer);
       phase = "rippling";
       ox = x; oy = y;
       status = "connecting";
       ripple0 = performance.now();
-      reveal0 = ripple0 + 1000;
+      reveal0 = ripple0 + 600;
     }
 
     const onDown = (e: PointerEvent) => startRipple(e.clientX, e.clientY);
@@ -117,11 +120,11 @@ export default function Splash({ word = "CosmIQ" }: { word?: string }) {
 
     let autoTimer = 0;
     // Wait (briefly) for Archivo so the wordmark draws in it.
-    Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1200))]).then(() => {
+    Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 600))]).then(() => {
       refreshTheme();
       paintWord();
       requestAnimationFrame(frame);
-      autoTimer = window.setTimeout(() => startRipple(innerWidth / 2, innerHeight / 2), 900);
+      autoTimer = window.setTimeout(() => startRipple(innerWidth / 2, innerHeight / 2), 700);
     });
 
     return () => {

@@ -29,8 +29,8 @@ test("saying GST is unavailable does not become a customer name or another GST q
 
 const identityDraft = (over: Partial<Draft> = {}): Draft => ({
   workflowVersion: 2, testIds: ["T002"], sampleType: "Red Chilli Powder", samples: 3,
-  name: "Arun Menon", phone: "91982823393", company: null, email: null, gstNo: null, noGst: false,
-  verification: "pending", verifyAttempts: 0, gstFormatAttempts: 0, awaiting: "gstNo", quotationId: null, orderIds: [], ...over,
+  name: "Arun Menon", phone: "91982823393", company: null, gstNo: null, noGst: false,
+  verification: "pending", verifyAttempts: 0, gstFormatAttempts: 0, awaiting: "gstNo", ...over,
 });
 function step(draft: Draft, text: string) {
   return nextStep({ state: "identify", draft, catalog: seed.tests, sampleTypes: seed.sampleTypes, pastSampleTypes: [] },

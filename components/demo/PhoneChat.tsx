@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import type { Chip, ConversationView, MessageMeta } from "@/lib/demo/data";
-import { inr } from "@/lib/demo/pricing";
 
 interface Props {
   view: ConversationView | null;
@@ -15,21 +14,6 @@ interface Props {
 type Message = ConversationView["messages"][number];
 const STEP_MS = 380;
 const FRESH_MS = 15000; // only animate messages that just arrived, not ones reloaded later
-
-function QuoteCard({ quote }: { quote: NonNullable<MessageMeta["quote"]> }) {
-  return (
-    <div className="qcard" aria-label={`Quotation ${quote.id}`}>
-      <div className="qcard-h"><b>Quotation {quote.id}</b><span>PDF</span></div>
-      {quote.lines.map((l) => (
-        <div className="qrow" key={l.testName}><span>{l.testName} × {l.samples}</span><span>{inr(l.amountInr)}</span></div>
-      ))}
-      <div className="qrow"><span>GST {Math.round(quote.gstRate * 100)}%</span><span>{inr(quote.gstInr)}</span></div>
-      <div className="qrow total"><span>Total</span><span>{inr(quote.totalInr)}</span></div>
-      <div className="qrow muted"><span>Turnaround</span><span>{quote.tatDays} days</span></div>
-      <a className="qcard-link" href={`/api/demo/quotations/${quote.id}/pdf`} target="_blank" rel="noreferrer">Open quotation PDF ↗</a>
-    </div>
-  );
-}
 
 // "Acting" the database check: steps tick in one by one, then the agent's reply is revealed.
 function VerifyCard({ v, animate, onStep, onDone }: {
@@ -73,8 +57,6 @@ function Bubble({ m, onGrow }: { m: Message; onGrow: () => void }) {
     <div className={`msg ${m.sender === "agent" ? "in" : "out"}`}>
       {m.meta?.verification && <VerifyCard v={m.meta.verification} animate={animate} onStep={onGrow} onDone={reveal} />}
       {revealed && <p>{m.body}</p>}
-      {revealed && m.meta?.quote && <QuoteCard quote={m.meta.quote} />}
-      {revealed && m.meta?.order && <div className="ocard"><b>✓ {m.meta.order.ids.join(", ")}</b><span>{m.meta.order.status}</span></div>}
       <time>{new Date(m.at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</time>
     </div>
   );

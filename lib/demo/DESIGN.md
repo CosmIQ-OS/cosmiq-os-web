@@ -1,6 +1,7 @@
 # Service-first approved quotation workflow
 
-Source: `tasks/2026-10-13-approved-quotations.plan.md` (R1–R10).
+Source: `tasks/2026-10-13-approved-quotations.plan.md` (R1–R10) and
+`tasks/2026-11-01-whatsapp-cloud-api.plan.md` (real WhatsApp channel).
 
 ## Problem / actors
 Customers describe services, provide identity, confirm samples and supply email. Staff decide whether the
@@ -39,11 +40,17 @@ Provider errors are visible, not success. Completion writes require the current 
 failures cannot overwrite a reclaimed attempt. A post-acceptance DB failure leaves `sending` for idempotent recovery.
 The 23-hour retry bound avoids duplicate email beyond Resend's 24-hour retention. No inbox-delivery claim.
 
+- `app/api/whatsapp/webhook/route.ts`: Meta verification + HMAC boundary; maps a `wa_id` to one active
+  conversation, stores the reply before sending, and deduplicates Meta message ids. Text only.
+- `../whatsapp/`: Cloud API adapter and payload parsing. Missing configuration fails closed; a loopback
+  Graph API URL is test-only and ignored on Vercel.
+
 ## Assumptions / limitations
-Phone is typed in the web-chat prototype, not received from WhatsApp metadata. Sample records/requirements
-remain illustrative. Existing signed shared-password staff sessions are reused. No real WhatsApp/LIMS
-connection, OTP, automatic retry worker, provider-delivery webhooks or deployment is part of this change.
-Old chat states cannot safely resume; user starts a new chat. Additive schema preserves older quotation rows.
+Web chat types the phone; WhatsApp uses the sender's `wa_id` as the phone. Neither is OTP. Sample records
+remain illustrative. Existing signed shared-password staff sessions are reused. No media messages, PDF
+delivery on WhatsApp, staff WhatsApp alerts or LIMS connection. A completed WhatsApp chat is terminal
+until the customer replies `NEW`/`START`. Old chat states cannot safely resume; start a new chat.
+Additive schema preserves older quotation rows.
 
 ## Validation
 Pure workflow/parser/pricing tests, real isolated Postgres orchestration tests, local HTTP provider capture,

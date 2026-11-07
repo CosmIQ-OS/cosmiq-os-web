@@ -163,3 +163,4 @@ export default function FooterWordmark({ word = "CosmIQ" }: { word?: string }) {
     </div>
   );
 }
+

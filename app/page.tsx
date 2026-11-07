@@ -87,7 +87,7 @@ export default function Home() {
       <Statement
         lines={[
           ["Not a", "guess."],
-          ["Not an", "AI hallucination."],
+          ["Zero", "hallucinations."],
           ["Your real", "LIMS."],
         ]}
         note="Your laboratory runs on precision. CosmIQ talks to customers in natural language, while all services, test parameters, turnaround times and prices are fetched strictly from your LIMS database."

@@ -28,8 +28,8 @@ test("expired, tampered and wrong-purpose cookies cannot access staff records or
   ];
   for (const token of tokens) {
     const headers = { Cookie: `cosmiq_staff=${token}` };
-    expect((await request.get("/api/staff/quotations", { headers })).status()).toBe(401);
-    expect((await request.post("/api/staff/quotations/unknown", { headers, data: { action: "approve" } })).status()).toBe(401);
+    expect((await request.get("/api/enquiries", { headers })).status()).toBe(401);
+    expect((await request.post("/api/demo/reset", { headers })).status()).toBe(401);
   }
 });
 
@@ -44,7 +44,7 @@ test("malformed sign-in requests and oversized passwords never create an authori
   for (const password of [null, 123, "x".repeat(257)]) {
     expect((await request.post("/api/staff/session", { data: { password } })).status()).toBe(401);
   }
-  expect((await request.get("/api/staff/quotations")).status()).toBe(401);
+  expect((await request.get("/api/enquiries")).status()).toBe(401);
 });
 
 test("malformed conversation JSON is rejected instead of creating a new-customer chat", async ({ request }) => {
@@ -91,40 +91,37 @@ test("nonexistent chat reads and messages return not found", async ({ request })
   expect((await request.post("/api/demo/conversations/unknown-id/messages", { data: { text: "aflatoxin" } })).status()).toBe(404);
 });
 
-test("declining and repeated confirmation cannot bypass the email step or duplicate a quote", async ({ request }) => {
+test("declining and repeated confirmation cannot bypass or duplicate the final state", async ({ request }) => {
   const id = await start(request);
   await message(request, id, "aflatoxin for pepper, 2 samples");
   await message(request, id, identity);
   const declined = await message(request, id, "No");
-  expect(declined.quotations).toEqual([]);
+  expect(declined.conversation.state).toBe("confirming");
   expect(declined.messages.at(-1).body).toContain("Nothing has been submitted");
-  await message(request, id, "Confirm");
+  const confirmed = await message(request, id, "Confirm");
+  expect(confirmed.conversation.state).toBe("confirmed");
+  expect(confirmed.messages.at(-1).body).toContain("Confirmed:");
   const repeated = await message(request, id, "Confirm");
-  expect(repeated.conversation.state).toBe("email"); expect(repeated.quotations).toEqual([]);
-  const submitted = await message(request, id, "repeat-safeguard@example.com");
-  const duplicate = await message(request, id, "another-recipient@example.com");
-  expect(duplicate.quotations).toHaveLength(1);
-  expect(duplicate.quotations[0].id).toBe(submitted.quotations[0].id);
-  expect(duplicate.conversation.draft.email).toBe("repeat-safeguard@example.com");
-  expect(duplicate.orders).toEqual([]);
+  expect(repeated.conversation.state).toBe("confirmed");
+  expect(repeated.messages.at(-1).body).toMatch(/already confirmed/i);
+  expect(repeated.messages.at(-1).body).not.toContain("email");
 });
 
-test("changing to an unsupported sample after confirmation cannot submit stale valid details", async ({ request }) => {
+test("changing to an unsupported sample before confirmation cannot keep stale valid details", async ({ request }) => {
   const id = await start(request);
-  for (const text of ["aflatoxin for pepper, 2 samples", identity, "Confirm"]) await message(request, id, text);
-  const changed = await message(request, id, "honey, 3 samples, early@example.com");
-  expect(changed.quotations).toEqual([]); expect(changed.conversation.draft.sampleType).toBeNull();
+  for (const text of ["aflatoxin for pepper, 2 samples", identity]) await message(request, id, text);
+  const changed = await message(request, id, "honey, 3 samples");
+  expect(changed.conversation.draft.sampleType).toBeNull();
   expect(changed.conversation.state).toBe("collecting");
   const corrected = await message(request, id, "turmeric");
   expect(corrected.conversation.state).toBe("confirming");
-  await message(request, id, "Confirm");
-  const final = await message(request, id, "corrected-sample@example.com");
-  expect(final.quotations).toHaveLength(1);
-  expect([final.conversation.draft.sampleType, final.conversation.draft.samples]).toEqual(["Turmeric Powder", 3]);
+  const confirmed = await message(request, id, "Confirm");
+  expect(confirmed.conversation.state).toBe("confirmed");
+  expect([confirmed.conversation.draft.sampleType, confirmed.conversation.draft.samples]).toEqual(["Turmeric Powder", 3]);
 });
 
 test("privacy-sensitive demo and staff pages remain non-indexable", async ({ page }) => {
-  for (const path of ["/pilot-demo", "/staff/quotations"]) {
+  for (const path of ["/pilot-demo", "/staff/enquiries"]) {
     await page.goto(path);
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
   }

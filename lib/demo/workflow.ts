@@ -1,36 +1,36 @@
 import { matchSampleType } from "./sample-types";
 import type { ConvState, Draft, Extraction, LabTest, TraceEvent } from "./types";
-import { EMAIL, GSTIN, listWords, normaliseGst, normalisePhone, validPhone } from "./verify";
+import { GSTIN, listWords, normaliseGst, normalisePhone, validPhone } from "./verify";
 
 // CONTRACT
 // GUARANTEES: service-first, identity check, catalogue-only selection, explicit summary confirmation,
-//   then delivery email and a pending-approval submission. Submitted drafts never change in chat.
+//   then a terminal confirmed state. Confirmed drafts never change in chat.
 // EXPECTS: orchestration performs the verify action against the database before collecting.
-// FAILURE BEHAVIOR: invalid details remain missing; unsupported requests are flagged for staff.
+// FAILURE BEHAVIOR: invalid details remain missing; unsupported requests are flagged.
 // DOES NOT: access DB/AI, calculate prices, send emails, approve quotes or create orders.
 export interface Ctx {
   state: ConvState; draft: Draft; pastSampleTypes: string[]; catalog: LabTest[]; sampleTypes: string[];
 }
 export interface Step {
   state: ConvState; draft: Draft; notes: string[]; ask: string | null; chips: string[];
-  flags: string[]; events: TraceEvent[]; action: null | "verify" | "submit";
+  flags: string[]; events: TraceEvent[]; action: null | "verify";
 }
 const MAX_SAMPLES = 50;
 export const firstName = (name: string) => name.trim().split(/\s+/)[0];
 export const shortTestName = (t: LabTest) => t.name.replace(/\s*\(.*?\)/g, "").replace(/\s+(Analysis|Testing|Test)\b/g, "").trim();
 
 export function nextStep(ctx: Ctx, ex: Extraction): Step {
-  const draft: Draft = { ...ctx.draft, testIds: [...ctx.draft.testIds], orderIds: [...ctx.draft.orderIds] };
+  const draft: Draft = { ...ctx.draft, testIds: [...ctx.draft.testIds] };
   let state = ctx.state;
   const notes: string[] = [], flags: string[] = [];
   const events: TraceEvent[] = [];
   const done = (partial: Partial<Step>): Step => ({ state, draft, notes, flags, events, ask: null, chips: [], action: null, ...partial });
   if (ctx.draft.workflowVersion !== 2) return done({ ask: "This chat used an older workflow. Please start a new chat." });
-  if (state === "pending_approval") {
-    return done({ ask: "Your request has been submitted. Your quotation will be emailed to you after approval. To change it, please contact the lab or start a new enquiry." });
+  if (state === "confirmed") {
+    return done({ ask: "Your request is already confirmed. Start a new chat if you need another enquiry." });
   }
   // Old saved demo sessions cannot safely resume with a different ordering of checks.
-  if (!["requesting", "identify", "collecting", "confirming", "email"].includes(state)) {
+  if (!["requesting", "identify", "collecting", "confirming"].includes(state)) {
     return done({ ask: "This chat used an older workflow. Please start a new chat." });
   }
   if (ex.intent === "discount") {
@@ -61,7 +61,7 @@ export function nextStep(ctx: Ctx, ex: Extraction): Step {
   if (ex.samples !== null) {
     draft.samples = Number.isInteger(ex.samples) && ex.samples >= 1 && ex.samples <= MAX_SAMPLES ? ex.samples : null;
     if (!draft.samples) {
-      notes.push(`Please enter a whole-number sample count between 1 and ${MAX_SAMPLES}. Larger batches need a staff quotation.`);
+      notes.push(`Please enter a whole-number sample count between 1 and ${MAX_SAMPLES}. Larger batches need a team review.`);
       if (ex.samples > MAX_SAMPLES) flags.push(`large batch: ${ex.samples} samples`);
     }
   }
@@ -112,31 +112,22 @@ export function nextStep(ctx: Ctx, ex: Extraction): Step {
     return done({ state, action: "verify" });
   }
 
-  if (changed && (state === "confirming" || state === "email")) {
+  if (changed && state === "confirming") {
     state = "collecting";
-    draft.email = null;
     events.push({ kind: "info", label: "Selection changed: confirmation required again" });
-  }
-  if (state === "email") {
-    draft.awaiting = "email";
-    if (!ex.email || !EMAIL.test(ex.email) || ex.email.length > 254) {
-      return done({ state, ask: ex.email ? "That email doesn't look right. Please send a valid email address." : "What email address should we send your quotation to?" });
-    }
-    draft.email = ex.email.toLowerCase();
-    draft.awaiting = null;
-    return done({ state: "pending_approval", action: "submit" });
   }
 
   const missing = !draft.testIds.length ? "tests" : !draft.sampleType ? "sampleType" : !draft.samples ? "samples" : null;
   if (!missing) {
-    if (state === "confirming" && !changed && ex.intent === "confirm" && flags.length === 0) {
-      draft.awaiting = "email";
-      return done({ state: "email", ask: "What email address should we send your quotation to?" });
-    }
     const selected = ctx.catalog.filter((t) => draft.testIds.includes(t.id));
     events.push({ kind: "db", label: "Requested services available", detail: selected.map((t) => t.name).join(", ") });
     draft.awaiting = "confirm";
     const summary = `${selected.map(shortTestName).join(", ")} for ${draft.samples} sample${draft.samples === 1 ? "" : "s"} of ${draft.sampleType}`;
+    if (state === "confirming" && !changed && ex.intent === "confirm") {
+      draft.awaiting = null;
+      const review = flags.length ? " Our team will review the details we flagged." : "";
+      return done({ state: "confirmed", ask: `Confirmed: ${summary}. Your request has been recorded.${review}` });
+    }
     return done({ state: "confirming", ask: `${ex.intent === "decline" ? "Nothing has been submitted. Tell me what to change, or confirm when ready.\n\n" : ""}Please confirm: ${summary}. Is this correct?`, chips: ["Confirm", "Not yet"] });
   }
   draft.awaiting = missing;

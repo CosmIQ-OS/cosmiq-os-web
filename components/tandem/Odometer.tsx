@@ -94,3 +94,4 @@ export default function Odometer({ target = 1482, label = "quotes verified", ico
     </p>
   );
 }
+

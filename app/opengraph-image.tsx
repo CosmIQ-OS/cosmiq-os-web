@@ -35,7 +35,10 @@ export default async function Image() {
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: `2px solid ${BORDER}`, paddingTop: 22, fontSize: 24, color: MUTED }}>
           <div style={{ display: "flex" }}>AI agents on top of your LIMS · prices from your data · staff approve</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, color: GREEN, fontSize: 20 }}>● LIMS VERIFIED</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, color: GREEN, fontSize: 20 }}>
+            <div style={{ width: 10, height: 10, borderRadius: 999, background: GREEN }} />
+            LIMS VERIFIED
+          </div>
         </div>
       </div>
     ),

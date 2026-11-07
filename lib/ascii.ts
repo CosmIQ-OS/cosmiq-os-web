@@ -56,8 +56,11 @@ export function bezier(x1: number, y1: number, x2: number, y2: number) {
 export function fitWidest(el: HTMLElement) {
   const probe = el.cloneNode(true) as HTMLElement;
   Object.assign(probe.style, {
-    position: "absolute", visibility: "hidden", padding: "0", fontSize: "100px",
-    fontVariationSettings: '"wdth" 125, "wght" 900', whiteSpace: "nowrap", width: "auto",
+    position: "absolute",
+    visibility: "hidden",
+    padding: "0",
+    fontSize: "100px",
+    fontVariationSettings: '"wdth" 125, "wght" 900',
   });
   document.body.appendChild(probe);
   const w = probe.getBoundingClientRect().width;

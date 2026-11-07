@@ -50,9 +50,9 @@ export interface Extraction {
   note?: string; // e.g. why the fallback was used
 }
 
-export type ConvState = "requesting" | "identify" | "collecting" | "confirming" | "email" | "pending_approval";
+export type ConvState = "requesting" | "identify" | "collecting" | "confirming" | "confirmed";
 export type Verification = "pending" | "verified" | "new" | "unverified";
-export type Awaiting = "identity" | "gstNo" | "tests" | "sampleType" | "samples" | "confirm" | "email" | null;
+export type Awaiting = "identity" | "gstNo" | "tests" | "sampleType" | "samples" | "confirm" | null;
 
 export interface Draft {
   workflowVersion: 2;
@@ -62,15 +62,12 @@ export interface Draft {
   name: string | null;
   phone: string | null;
   company: string | null;
-  email: string | null;
   gstNo: string | null;
   noGst: boolean;
   verification: Verification;
   verifyAttempts: number;
   gstFormatAttempts?: number; // optional for version-2 conversations created before the bounded GST step
   awaiting: Awaiting;
-  quotationId: string | null;
-  orderIds: string[];
 }
 
 export type TraceKind = "ai" | "db" | "ask" | "flag" | "quote" | "order" | "info";

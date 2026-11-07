@@ -11,7 +11,9 @@ export default defineConfig({
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
     { name: "mobile-chromium", use: { ...devices["Pixel 7"] } },
   ],
-  webServer: [{ command: "node tests/mock-email-server.mjs", url: "http://127.0.0.1:3101", reuseExistingServer: false }, {
+  webServer: [{
+    command: "node tests/mock-whatsapp-server.mjs", url: "http://127.0.0.1:3102/messages", reuseExistingServer: false,
+  }, {
     command: "npx next start -p 3100",
     port: 3100,
     reuseExistingServer: false,
@@ -27,6 +29,12 @@ export default defineConfig({
       RESEND_API_KEY: "test-resend-key",
       QUOTATION_EMAIL_FROM: "FQLab <test@example.com>",
       QUOTATION_EMAIL_TEST_URL: "http://127.0.0.1:3101/emails",
+      WHATSAPP_ACCESS_TOKEN: "test-whatsapp-token",
+      WHATSAPP_PHONE_NUMBER_ID: "123456789012345",
+      WHATSAPP_APP_SECRET: "test-whatsapp-secret",
+      WHATSAPP_VERIFY_TOKEN: "test-whatsapp-verify",
+      WHATSAPP_GRAPH_VERSION: "v26.0",
+      WHATSAPP_API_TEST_URL: "http://127.0.0.1:3102/messages",
     },
     timeout: 120_000,
   }],

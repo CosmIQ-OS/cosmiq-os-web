@@ -92,7 +92,7 @@ export default function DemoApp() {
       setView(null);
       sessionStorage.removeItem("cosmiq-conversation");
       setError("");
-    } else setError("Could not reset the demo. Staff sign-in is required, and no email can be in progress.");
+    } else setError("Could not reset the demo. Staff sign-in is required.");
     setBusy(false);
   }
 

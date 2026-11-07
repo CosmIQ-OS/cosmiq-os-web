@@ -57,6 +57,43 @@ refresh the queue to see it. Retries are refused after 23 hours from approval (R
 is 24 hours). Check the provider dashboard before manually arranging another send. There is no automatic
 background retry worker. Sending never happens from the customer session.
 
+## WhatsApp channel (free test number)
+
+`/api/whatsapp/webhook` turns the simulated phone into a real WhatsApp chat. It reuses the same
+workflow, database, staff approval and email delivery; only the transport changes. Text messages only.
+
+1. Create a free Meta app at <https://developers.facebook.com> (no card needed) and add the
+   **WhatsApp** product. In **WhatsApp → API Setup**, note the **Phone number ID**, the temporary
+   **access token**, and add your own WhatsApp number under **To** (Meta sends a verification code).
+2. Copy the **App Secret** from **App settings → Basic** and choose any private webhook verify token.
+3. Add to `.env.local`:
+
+   ```dotenv
+   WHATSAPP_ACCESS_TOKEN=...
+   WHATSAPP_PHONE_NUMBER_ID=...
+   WHATSAPP_APP_SECRET=...
+   WHATSAPP_VERIFY_TOKEN=choose-a-random-webhook-token
+   WHATSAPP_GRAPH_VERSION=v26.0
+   ```
+
+4. Start the app (`npm run dev`) and expose it over HTTPS, for example with a Cloudflare quick tunnel:
+
+   ```powershell
+   cloudflared tunnel --url http://localhost:3000
+   ```
+
+5. In **WhatsApp → Configuration**, set the callback URL to
+   `https://<tunnel-host>/api/whatsapp/webhook`, enter the same verify token, click **Verify and save**,
+   then subscribe to the **messages** field. The tunnel URL changes on each restart; update Meta when it does.
+6. Send a WhatsApp text to the test number. The bot replies with the greeting and the next workflow step.
+
+The test number can only message numbers you added as recipients (up to five), and the temporary token
+expires after about 24 hours. Neither requires a card. A production number needs Meta review and a
+permanent token. Missing `WHATSAPP_*` values make the webhook return 503; the web demo is unaffected.
+A completed chat is terminal: reply `NEW` (or `START`) to open a fresh enquiry. Quotation PDFs still go
+by email after staff approval; they are not sent on WhatsApp. Automated tests use a local mock Graph API
+and never call Meta.
+
 ## Check and test
 
 ```powershell

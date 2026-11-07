@@ -12,3 +12,5 @@ server.err.log
 *.tsbuildinfo
 
 .vercel
+.playwright-mcp
+

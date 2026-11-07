@@ -81,7 +81,7 @@ export default function StaffEnquiries() {
             <p className="lede">{rows.length} enquiries</p>
             <div className="hero-btns" style={{ margin: "0 0 24px" }}>
               <button className="btn btn-sm ghost" type="button" onClick={csv}>Export CSV</button>
-              <a className="btn btn-sm ghost" href="/staff/quotations">Quotation approvals</a>
+
               <button className="btn btn-sm ghost" type="button" onClick={logout}>Sign out</button>
             </div>
             <div style={{ overflowX: "auto" }}>

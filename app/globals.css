@@ -163,35 +163,37 @@ main, footer { position: relative; z-index: 1; }
   border-radius: 0;
 }
 .theme-btn:hover { border-color: var(--nav-ink); }
-.nav-end { display: flex; align-items: center; gap: 12px; }
+.nav-end { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .nav-cta .short { display: none; }
 
 .mobile-menu { display: none; position: relative; }
 .mobile-menu summary {
   cursor: pointer;
   list-style: none;
-  font: 500 14px var(--text);
-  padding: 6px 12px;
-  border: 1px solid var(--white);
+  font: 500 13px var(--text);
+  padding: 6px 11px;
+  border: 1px solid var(--nav-ink);
   background: transparent;
-  color: var(--white);
+  color: var(--nav-ink);
+  user-select: none;
 }
 .mobile-menu summary::-webkit-details-marker { display: none; }
 .mobile-menu nav {
   position: absolute;
-  top: 48px;
+  top: calc(100% + 8px);
   right: 0;
   display: grid;
-  min-width: 220px;
-  background: var(--black);
+  min-width: 200px;
+  background: var(--nav-bg);
   border: 1px solid var(--gray-2);
   box-shadow: var(--sh);
+  z-index: 60;
 }
 .mobile-menu nav a {
-  padding: 14px 18px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--gray-2);
   text-decoration: none;
-  color: var(--white);
+  color: var(--nav-ink);
   font: 500 14px var(--text);
 }
 .mobile-menu nav a:last-child { border-bottom: 0; }
@@ -495,6 +497,8 @@ footer { background: var(--black); }
   .hero-main { grid-template-columns: minmax(0, 1fr); }
   .facts { grid-template-columns: 1fr 1fr; }
   .facts > div, .facts > li { padding: 18px var(--gutter); }
+  .facts > div:nth-child(2n), .facts > li:nth-child(2n) { border-right: 0; }
+  .facts > div:nth-child(-n+2), .facts > li:nth-child(-n+2) { border-bottom: 1px solid var(--gray-2); }
   .way { grid-template-columns: 1fr; }
   .install-steps > li { grid-template-columns: 1fr; }
   .cmd code, .hero-cmd .cmd code { font-size: 13px; padding: 14px 12px; }
@@ -503,7 +507,7 @@ footer { background: var(--black); }
   .cta-grid { grid-template-columns: 1fr; }
   .desk-table th, .desk-table td { display: block; width: 100%; padding-right: 0; }
   .desk-table td { padding-top: 0; }
-  .links { display: none; }
+  .nav ul, .nav .links { display: none !important; }
   .mobile-menu { display: block; }
   .nav-cta .long { display: none; }
   .nav-cta .short { display: inline; }
@@ -519,6 +523,7 @@ footer { background: var(--black); }
   .h2 { font-size: clamp(36px, 11vw, 54px); }
   .frow, .checks { grid-template-columns: 1fr; }
   .form { padding: 20px; }
+  .foot-word { font-size: 20vw; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,11 +1,11 @@
 import crypto from "node:crypto";
 import {
-  addEvents, addMessage, allocateQuotationId, claimConversation, createConversation, ensureDemoData, finishConversation,
-  findCustomerForVerification, getCatalog, getConversation, getCustomer, getCustomerProfile,
-  getGstRate, getSampleTypes, releaseConversation, type Chip, type MessageMeta, type PendingQuotation,
+  addEvents, addMessage, claimConversation, createConversation, ensureDemoData, finishConversation,
+  findCustomerForVerification, getAgentMessagesAfter, getCatalog, getConversation, getCustomer, getCustomerProfile,
+  getLastAgentMessageId, getOrCreateWhatsAppConversation, getSampleTypes, releaseConversation,
+  restartWhatsAppConversation as detachWhatsAppConversation, type Chip, type MessageMeta,
 } from "./data";
 import { extract } from "./extract";
-import { buildQuote, inr } from "./pricing";
 import type { Customer, Draft, Extraction, TraceEvent } from "./types";
 import { compareWithRecord, decideVerification, FIELD_LABEL, listWords } from "./verify";
 import { firstName, nextStep, shortTestName } from "./workflow";
@@ -16,8 +16,8 @@ const NOTHING: Extraction = {
 };
 const emptyDraft = (): Draft => ({
   workflowVersion: 2,
-  testIds: [], sampleType: null, samples: null, name: null, phone: null, company: null, email: null,
-  gstNo: null, noGst: false, verification: "pending", verifyAttempts: 0, awaiting: "tests", quotationId: null, orderIds: [],
+  testIds: [], sampleType: null, samples: null, name: null, phone: null, company: null,
+  gstNo: null, noGst: false, verification: "pending", verifyAttempts: 0, awaiting: "tests",
   gstFormatAttempts: 0,
 });
 function detailChips(persona: Customer | null): Chip[] {
@@ -38,6 +38,38 @@ export async function startConversation(personaId: string | null): Promise<strin
   return id;
 }
 
+export const WHATSAPP_GREETING = "Hello 👋 Welcome to FQLab. Which testing services do you need?";
+
+async function openWhatsAppConversation(waId: string, restart: boolean): Promise<{ id: string; greeting: string | null }> {
+  await ensureDemoData();
+  const draft = emptyDraft();
+  // WhatsApp supplies the sender's number with country code; identity still checks name and GST.
+  draft.phone = waId;
+  const opened = restart
+    ? await detachWhatsAppConversation(waId, draft)
+    : await getOrCreateWhatsAppConversation(waId, draft);
+  if (!opened.created) return { id: opened.id, greeting: null };
+  await addMessage(opened.id, "agent", WHATSAPP_GREETING);
+  await addEvents(opened.id, [{ kind: "ask", label: "Waiting for the customer's service request" }]);
+  return { id: opened.id, greeting: WHATSAPP_GREETING };
+}
+
+export function startWhatsAppConversation(waId: string) {
+  return openWhatsAppConversation(waId, false);
+}
+
+// A completed chat is terminal. `NEW` detaches it and opens a fresh enquiry for the same number.
+export function restartWhatsAppConversation(waId: string) {
+  return openWhatsAppConversation(waId, true);
+}
+
+// Wraps the boolean-returning handleMessage without changing its contract; returns only new agent replies.
+export async function handleWhatsAppMessage(conversationId: string, text: string): Promise<string[]> {
+  const before = await getLastAgentMessageId(conversationId);
+  if (!(await handleMessage(conversationId, text))) throw new Error("WhatsApp conversation not found.");
+  return getAgentMessagesAfter(conversationId, before);
+}
+
 async function verifyCustomer(input: Draft) {
   const draft = { ...input };
   const record = await findCustomerForVerification(draft.gstNo, draft.phone!);
@@ -55,8 +87,8 @@ async function verifyCustomer(input: Draft) {
   if (outcome === "new") {
     draft.verification = "new" as const;
     steps.push({ label: "No matching customer record", ok: null });
-    events.push({ kind: "flag", label: "New customer: identity needs staff review" });
-    return { draft, customerId: null, proceed: true, reply: "I couldn't find a matching customer record. Our staff will review your details before approving your quotation.", steps, result: "New customer · staff review required", events, flags: ["new customer needs identity review"] };
+    events.push({ kind: "flag", label: "New customer: identity needs review" });
+    return { draft, customerId: null, proceed: true, reply: "I couldn't find a matching customer record. I've noted your details for our team.", steps, result: "New customer · review noted", events, flags: ["new customer needs identity review"] };
   }
   if (outcome === "retry") {
     const fields = comparison!.mismatched;
@@ -70,14 +102,14 @@ async function verifyCustomer(input: Draft) {
     return { draft, customerId: null, proceed: false, reply: `The details don't match our records. Please re-check your ${listWords(fields.map((f) => FIELD_LABEL[f]))}.`, steps, result: "Details don't match", events, flags: [] as string[] };
   }
   draft.verification = "unverified" as const;
-  events.push({ kind: "flag", label: "Needs staff: customer details don't match records" });
-  return { draft, customerId: null, proceed: true, reply: "I still can't match those details. Staff must verify your account before approving the quotation.", steps, result: "Not verified · sent to staff", events, flags: ["customer details don't match records"] };
+  events.push({ kind: "flag", label: "Customer details don't match records" });
+  return { draft, customerId: null, proceed: true, reply: "I still can't match those details. I've noted them for our team to verify.", steps, result: "Not verified · review noted", events, flags: ["customer details don't match records"] };
 }
 
 // CONTRACT
-// GUARANTEES: serialises writes per conversation; only creates a pending quote after confirmation/email.
+// GUARANTEES: serialises writes per conversation; a confirmed request is terminal.
 // FAILURE BEHAVIOR: concurrent messages fail with ConversationBusy; DB/extraction errors propagate.
-// DOES NOT: approve, mail quotations or create orders. AI output never supplies prices or replies.
+// DOES NOT: approve, mail quotations, create orders or calculate prices. AI output never supplies replies.
 export class ConversationBusy extends Error {}
 export async function handleMessage(conversationId: string, text: string): Promise<boolean> {
   await ensureDemoData();
@@ -98,12 +130,12 @@ async function processMessage(conversationId: string, text: string, token: strin
     && conversation.draft.name && conversation.draft.phone && !conversation.draft.gstNo && !conversation.draft.noGst) {
     conversation.draft.awaiting = "gstNo";
   }
-  const [catalog, sampleTypes, gstRate, persona] = await Promise.all([
-    getCatalog(), getSampleTypes(), getGstRate(), conversation.personaId ? getCustomer(conversation.personaId) : Promise.resolve(null),
+  const [catalog, sampleTypes, persona] = await Promise.all([
+    getCatalog(), getSampleTypes(), conversation.personaId ? getCustomer(conversation.personaId) : Promise.resolve(null),
   ]);
   let customerId = conversation.customerId;
   let profile = customerId ? await getCustomerProfile(customerId) : null;
-  const ex = conversation.state === "pending_approval" || conversation.draft.workflowVersion !== 2 ? NOTHING : await extract(text, { catalog, sampleTypes, state: conversation.state, awaiting: conversation.draft.awaiting });
+  const ex = conversation.state === "confirmed" || conversation.draft.workflowVersion !== 2 ? NOTHING : await extract(text, { catalog, sampleTypes, state: conversation.state, awaiting: conversation.draft.awaiting });
   const events: TraceEvent[] = [{ kind: "ai", label: ex.engine === "gemini" ? "AI read the message (Gemini)" : "Message read by fallback parser", detail: `intent: ${ex.intent} · tests: ${ex.testIds.join(", ") || "none"}${ex.note ? ` · ${ex.note}` : ""}` }];
   const context = { state: conversation.state, draft: conversation.draft, pastSampleTypes: [...new Set(profile?.orders.map((o) => o.sampleType) ?? [])], catalog, sampleTypes };
   let step = nextStep(context, ex);
@@ -127,27 +159,15 @@ async function processMessage(conversationId: string, text: string, token: strin
     }
   }
   const draft = step.draft;
-  let pendingQuotation: PendingQuotation | undefined;
-  let main = step.ask ?? "";
+  const main = step.ask ?? "";
   meta.chips = draft.workflowVersion !== 2 ? [] : draft.awaiting === "identity" ? detailChips(persona) : step.chips;
   if (draft.awaiting === "gstNo") meta.chips = [
     ...(persona?.gstNo ? [{ label: "Send GST", text: `GST ${persona.gstNo}` }] : []),
     { label: "No GST registration", text: "NO GST" },
   ];
-  if (draft.awaiting === "email") meta.chips = [{ label: "Send email", text: persona?.email ?? "asha.varma@spiceroute.example" }];
-  if (step.action === "submit") {
-    const quote = buildQuote(draft.testIds.map((id) => catalog.find((t) => t.id === id)!), draft.sampleType!, draft.samples!, gstRate);
-    const quotationId = await allocateQuotationId();
-    pendingQuotation = { id: quotationId, name: draft.name!, company: draft.company ?? "", email: draft.email!,
-      gstNo: draft.gstNo, city: profile?.customer.city ?? null, quote };
-    draft.quotationId = quotationId;
-    main = "Your quotation will be emailed to you after approval.";
-    meta.chips = [];
-    events.push({ kind: "quote", label: `Quotation ${quotationId} awaiting staff approval`, detail: `${inr(quote.totalInr)} · recipient ${draft.email} · not sent` });
-  }
-  events.push(...flags.map((f) => ({ kind: "flag" as const, label: `Needs staff: ${f}` })));
+  events.push(...flags.map((f) => ({ kind: "flag" as const, label: `Flagged: ${f}` })));
   await finishConversation({ id: conversationId, token, state: step.state, draft,
     needsStaff: conversation.needsStaff || flags.length > 0, customerId, text,
-    reply: [...lead, main].filter(Boolean).join("\n\n"), meta, events, quotation: pendingQuotation });
+    reply: [...lead, main].filter(Boolean).join("\n\n"), meta, events });
   return true;
 }
