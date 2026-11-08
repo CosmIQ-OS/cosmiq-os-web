@@ -43,12 +43,19 @@ export default function Odometer({ target = 1482, label = "quotes verified", ico
   return (
     <p ref={containerRef} className="dl-count intro" data-downloads style={{ "--i": 5 } as any}>
       {icon && (
-        <svg viewBox="0 0 16 16" aria-hidden="true">
+        <svg viewBox="0 0 16 16" aria-hidden="true" style={{ color: "var(--live)" }}>
           <path
-            d="M8 1.5v9M4 7l4 4 4-4M2 14.5h12"
+            d="M8 1.5l5 2.2v4.8c0 3.3-2.1 6.2-5 7-2.9-.8-5-3.7-5-7V3.7l5-2.2z"
             fill="none"
             stroke="currentColor"
-            strokeWidth="1.6"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M5.5 8l1.8 1.8 3.2-3.6"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
           />

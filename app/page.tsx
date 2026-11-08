@@ -3,7 +3,6 @@ import LeadForm from "@/components/LeadForm";
 import HeroArt from "@/components/tandem/HeroArt";
 import Statement from "@/components/tandem/Statement";
 import Odometer from "@/components/tandem/Odometer";
-import CommandLine from "@/components/tandem/CommandLine";
 
 const FAQ = [
   ["Can the AI quote a wrong price?", "No. Prices, taxes and totals are calculated by backend business logic from your LIMS or service database. The AI only handles the conversation."],
@@ -45,9 +44,19 @@ export default function Home() {
               </Link>
             </div>
             <Odometer target={1482} label="LIMS checks verified" />
-            <div className="hero-cmd intro" style={{ "--i": 6 } as any}>
-              <p>Start a web-chat pilot on your real service data with one command:</p>
-              <CommandLine command="npx cosmiq-lims-sync --catalog ./services.json --verify" />
+            <div className="hero-trust intro" style={{ "--i": 6 } as any}>
+              <div className="trust-pill">
+                <span className="trust-dot" />
+                <span>Zero change to staff LIMS routines</span>
+              </div>
+              <div className="trust-pill">
+                <span className="trust-dot" />
+                <span>Official Meta WhatsApp Cloud API integration</span>
+              </div>
+              <div className="trust-pill">
+                <span className="trust-dot" />
+                <span>ISO/IEC 17025 compliant quotation templates</span>
+              </div>
             </div>
           </div>
           <div
@@ -62,20 +71,20 @@ export default function Home() {
 
         <ul className="facts" aria-label="What you can rely on">
           <li>
-            <b>0 AI guesswork</b>
+            <b>Deterministic pricing</b>
             <span>Prices, taxes &amp; TAT computed strictly by backend logic from your LIMS.</span>
           </li>
           <li>
-            <b>100% staff approved</b>
-            <span>Quotations and promotions are reviewed by staff before sending.</span>
+            <b>Staff in control</b>
+            <span>Quotations and customer follow-ups are approved by staff before sending.</span>
           </li>
           <li>
-            <b>Direct LIMS sync</b>
-            <span>Connects to your service catalogue via API or database replica.</span>
+            <b>Direct LIMS integration</b>
+            <span>Connects to your service catalogue via API or secure database replica.</span>
           </li>
           <li>
-            <b>Audit logged</b>
-            <span>Every enquiry, customer verification, and state transition is saved.</span>
+            <b>Audit-ready logs</b>
+            <span>Every enquiry, customer verification, and state transition is recorded.</span>
           </li>
         </ul>
       </section>
@@ -83,7 +92,7 @@ export default function Home() {
       <Statement
         lines={[
           ["Not a", "guess."],
-          ["Zero", "hallucinations."],
+          ["Verified", "pricing."],
           ["Your real", "LIMS."],
         ]}
         note="Your laboratory runs on precision. CosmIQ talks to customers in natural language, while all services, test parameters, turnaround times and prices are fetched strictly from your LIMS database."
@@ -96,19 +105,18 @@ export default function Home() {
           </h2>
           <div className="ways-list">
             <div className="way" data-rv="row">
-              <h3>Enquiry &amp; Quote</h3>
+              <h3>Enquiry &amp; Quote Agent</h3>
               <p>
                 Receives customer requests on WhatsApp, checks service availability in your LIMS, confirms sample
                 counts and pre-fills quotations for staff review.
-                <span className="speed">deterministic pricing · zero hallucination</span>
+                <span className="speed">deterministic pricing · verified test catalogue</span>
               </p>
             </div>
             <div className="way" data-rv="row">
-              <h3>Marketing Agent</h3>
+              <h3>Customer Follow-up Agent</h3>
               <p>
-                Reads verified customers and previous order history from LIMS. Drafts personalised promotions for
-                relevant seasonal tests. An administrator reviews every draft before sending.
-                <span className="speed">admin approved · human-in-the-loop</span>
+                Identifies previous test requests and seasonal testing cycles from LIMS records. Drafts personalised check-ins for repeat customers. An administrator reviews every draft before sending.
+                <span className="speed">staff approved · human-in-the-loop</span>
               </p>
             </div>
           </div>
@@ -122,11 +130,9 @@ export default function Home() {
             <br />
             to a verified quote.
           </h2>
-          <div className="one-cmd" data-rv="row">
-            <CommandLine command="cosmiq quote --channel whatsapp --lims-verify strict" big />
-            <p>
-              When a customer writes in, the agent follows a controlled sequence. Service availability, sample requirements
-              and prices are always fetched from your LIMS.
+          <div className="workflow-intro" data-rv="row">
+            <p className="workflow-intro-lead">
+              From the instant a customer sends a message on WhatsApp to the moment your staff approves and dispatches an official quotation PDF, CosmIQ enforces a strict verification pipeline. Test availability, sample sizes, turnaround times, and contract pricing are queried directly from your LIMS.
             </p>
           </div>
 
@@ -145,23 +151,51 @@ export default function Home() {
 
             <li data-rv="row">
               <div>
-                <h3>2. Customer verified</h3>
+                <h3>2. AI Analysis &amp; LIMS Match</h3>
                 <p>
-                  Name, phone number and GST number are checked against customer records before applying contract rates.
+                  CosmIQ parses the customer&apos;s natural language enquiry, maps the sample matrix to certified standard methods in your LIMS, and verifies customer GSTIN for contract pricing.
                 </p>
               </div>
-              <div className="qr-box">
-                <div className="qr">
-                  <div className="scan" />
+              <div className="ai-analysis-card" aria-label="AI Analysis and LIMS Verification Card">
+                <div className="ai-card-header">
+                  <div className="ai-card-title">
+                    <span className="ai-pulse-dot" />
+                    <span>CosmIQ Entity &amp; LIMS Match</span>
+                  </div>
+                  <span className="ai-confidence-pill">99.4% Match</span>
                 </div>
-                <dl>
-                  <dt>customer</dt>
-                  <dd>Apex Agro Exports Ltd</dd>
-                  <dt>gstin</dt>
-                  <dd>27AABCA1234F1Z9</dd>
-                  <dt>status</dt>
-                  <dd>VERIFIED IN LIMS</dd>
-                </dl>
+                <div className="ai-card-matrix">
+                  <div className="ai-card-row">
+                    <span className="ai-k">Sample Matrix</span>
+                    <span className="ai-v bold">Basmati Rice (Export Grade)</span>
+                  </div>
+                  <div className="ai-card-row">
+                    <span className="ai-k">Detected Test</span>
+                    <span className="ai-v">Multi-Residue Pesticide Screen (250+ compounds)</span>
+                  </div>
+                  <div className="ai-card-row">
+                    <span className="ai-k">Standard Method</span>
+                    <span className="ai-v mono">AOAC 2007.01 · NABL Accredited</span>
+                  </div>
+                  <div className="ai-card-divider" />
+                  <div className="ai-card-row">
+                    <span className="ai-k">Customer Record</span>
+                    <span className="ai-v bold">Apex Agro Exports Ltd</span>
+                  </div>
+                  <div className="ai-card-row">
+                    <span className="ai-k">GSTIN / Tax ID</span>
+                    <span className="ai-v mono">27AABCA1234F1Z9</span>
+                  </div>
+                  <div className="ai-card-row status-highlight">
+                    <span className="ai-k">LIMS Rate Card</span>
+                    <span className="ai-v verified-badge">
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                        <path d="M13.5 4.5l-7 7L3 8" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      Verified · Tier-2 Contract Applied
+                    </span>
+                  </div>
+                </div>
               </div>
             </li>
 
@@ -234,7 +268,7 @@ export default function Home() {
               </tr>
               <tr data-rv style={{ "--i": 1 } as any}>
                 <th>WhatsApp Business</th>
-                <td>Official Meta WhatsApp Cloud API with verified phone number, green badge compatibility, and TLS encryption.</td>
+                <td>Official Meta WhatsApp Cloud API with verified business identity, automated routing, and end-to-end TLS encryption.</td>
               </tr>
               <tr data-rv style={{ "--i": 2 } as any}>
                 <th>Quotation Engine</th>

@@ -9,6 +9,8 @@ playwright-report
 !.env.example
 server.log
 server.err.log
+cloudflared.log
+dev-server.log
 *.tsbuildinfo
 
 .vercel

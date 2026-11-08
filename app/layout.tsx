@@ -18,16 +18,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist:wght@300..800&family=Geist+Mono:wght@400..700&display=swap"
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `
 try { const t = localStorage.getItem("tandem-theme"); if (t) document.documentElement.dataset.theme = t; } catch {}
-try {
-  var l = document.createElement("link");
-  l.rel = "stylesheet";
-  l.href = "https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist:wght@300..800&family=Geist+Mono:wght@400..700&display=swap";
-  document.head.appendChild(l);
-} catch {}
             `,
           }}
         />
