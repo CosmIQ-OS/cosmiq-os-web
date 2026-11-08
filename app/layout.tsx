@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import MobileMenu from "@/components/MobileMenu";
-import Splash from "@/components/tandem/Splash";
-import ScrollReveals from "@/components/tandem/ScrollReveals";
 import { NAV, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -24,7 +22,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{
             __html: `
 try { const t = localStorage.getItem("tandem-theme"); if (t) document.documentElement.dataset.theme = t; } catch {}
-try { if (!navigator.webdriver && !sessionStorage.getItem("cosmiq-splash") && location.pathname === "/" && !location.hash && !matchMedia("(prefers-reduced-motion: reduce)").matches) document.documentElement.classList.add("splash"); } catch {}
 try {
   var l = document.createElement("link");
   l.rel = "stylesheet";
@@ -39,8 +36,6 @@ try {
         <a className="skip" href="#main">
           Skip to content
         </a>
-        <Splash word="CosmIQ" />
-        <ScrollReveals />
 
         <header className="nav" aria-label="Main">
           <div className="nav-in">

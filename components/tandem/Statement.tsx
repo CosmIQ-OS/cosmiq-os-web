@@ -47,7 +47,7 @@ export default function Statement({
         const baseSize = full.get(el) || 100;
         el.style.fontSize = (baseSize * (0.26 + 0.74 * e)).toFixed(2) + "px";
         el.style.fontVariationSettings = `"wdth" ${(62 + 63 * e).toFixed(1)}`;
-        el.style.color = `color-mix(in srgb, var(--white) ${(15 + 85 * e).toFixed(1)}%, var(--gray-2))`;
+        el.style.color = `color-mix(in srgb, var(--white) ${(65 + 35 * e).toFixed(1)}%, var(--gray-1))`;
         el.classList.toggle("on", k >= 1);
       });
     }
