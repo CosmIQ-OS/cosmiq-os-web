@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -25,7 +25,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script
           dangerouslySetInnerHTML={{
             __html: `
-try { const t = localStorage.getItem("tandem-theme"); if (t) document.documentElement.dataset.theme = t; } catch {}
+try {
+  var root = document.documentElement;
+  var t = localStorage.getItem("tandem-theme");
+  if (t === "dark") root.dataset.theme = "dark";
+  else if (t === "light") delete root.dataset.theme;
+  var raw = localStorage.getItem("cosmiq-preview-vars");
+  if (raw) {
+    var saved = JSON.parse(raw);
+    var mode = root.dataset.theme === "dark" ? "dark" : "light";
+    var vars = saved && (saved[mode] || saved);
+    if (vars && typeof vars === "object") {
+      Object.keys(vars).forEach(function (k) {
+        if (k.indexOf("--") === 0 && typeof vars[k] === "string") {
+          root.style.setProperty(k, vars[k]);
+        }
+      });
+    }
+  }
+} catch {}
             `,
           }}
         />
