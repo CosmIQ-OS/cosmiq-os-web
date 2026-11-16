@@ -1,0 +1,83 @@
+{
+  "$schema": "https://tr.designtokens.org/format/",
+  "name": "CosmIQ Tandem Warm Paper Design System",
+  "version": "1.1.0",
+  "color": {
+    "primitive": {
+      "stone": {
+        "50": { "$value": "#faf8f5", "$type": "color", "$description": "Warm off-white highlight" },
+        "100": { "$value": "#f4f1ea", "$type": "color", "$description": "Light mode canvas / Dark mode primary ink" },
+        "200": { "$value": "#ebe6da", "$type": "color", "$description": "Light mode surface" },
+        "300": { "$value": "#d8d2c4", "$type": "color", "$description": "Light mode 1px border" },
+        "400": { "$value": "#b8b3a8", "$type": "color", "$description": "Dark mode warm secondary text" },
+        "500": { "$value": "#8f8a80", "$type": "color", "$description": "Dark mode muted metadata text" },
+        "600": { "$value": "#57524a", "$type": "color", "$description": "Light mode muted metadata text" },
+        "700": { "$value": "#3a3630", "$type": "color", "$description": "Light mode warm secondary text" },
+        "800": { "$value": "#2e2b27", "$type": "color", "$description": "Dark mode 1px border" },
+        "850": { "$value": "#22201d", "$type": "color", "$description": "Dark mode elevated surface" },
+        "900": { "$value": "#181715", "$type": "color", "$description": "Dark mode surface" },
+        "950": { "$value": "#0a0a0a", "$type": "color", "$description": "Dark mode canvas / Light mode primary ink" }
+      },
+      "orange": {
+        "500": { "$value": "#ff5a1f", "$type": "color", "$description": "CosmIQ signature accent" },
+        "600": { "$value": "#e04812", "$type": "color", "$description": "Dense orange hover reference" }
+      },
+      "green": {
+        "500": { "$value": "#4ade80", "$type": "color", "$description": "Dark mode LIMS verified status" },
+        "700": { "$value": "#146c3a", "$type": "color", "$description": "Light mode LIMS verified status" }
+      },
+      "amber": {
+        "400": { "$value": "#ffd400", "$type": "color", "$description": "Warning and highlight marker" }
+      },
+      "red": {
+        "400": { "$value": "#f87171", "$type": "color", "$description": "Dark mode error status" },
+        "600": { "$value": "#c81e1e", "$type": "color", "$description": "Light mode error status" }
+      }
+    },
+    "semantic": {
+      "light": {
+        "bg-canvas": { "$value": "{color.primitive.stone.100}", "$type": "color" },
+        "bg-surface": { "$value": "{color.primitive.stone.200}", "$type": "color" },
+        "bg-elevated": { "$value": "#ffffff", "$type": "color" },
+        "text-primary": { "$value": "{color.primitive.stone.950}", "$type": "color" },
+        "text-secondary": { "$value": "{color.primitive.stone.700}", "$type": "color" },
+        "text-muted": { "$value": "{color.primitive.stone.600}", "$type": "color" },
+        "border-default": { "$value": "{color.primitive.stone.300}", "$type": "color" },
+        "border-strong": { "$value": "{color.primitive.stone.950}", "$type": "color" },
+        "accent-primary": { "$value": "{color.primitive.orange.500}", "$type": "color" },
+        "accent-ink": { "$value": "#ffffff", "$type": "color" },
+        "status-success": { "$value": "{color.primitive.green.700}", "$type": "color" },
+        "status-warning": { "$value": "{color.primitive.amber.400}", "$type": "color" },
+        "status-danger": { "$value": "{color.primitive.red.600}", "$type": "color" }
+      },
+      "dark": {
+        "bg-canvas": { "$value": "{color.primitive.stone.950}", "$type": "color" },
+        "bg-surface": { "$value": "{color.primitive.stone.900}", "$type": "color" },
+        "bg-elevated": { "$value": "{color.primitive.stone.850}", "$type": "color" },
+        "text-primary": { "$value": "{color.primitive.stone.100}", "$type": "color" },
+        "text-secondary": { "$value": "{color.primitive.stone.400}", "$type": "color" },
+        "text-muted": { "$value": "{color.primitive.stone.500}", "$type": "color" },
+        "border-default": { "$value": "{color.primitive.stone.800}", "$type": "color" },
+        "border-strong": { "$value": "{color.primitive.stone.100}", "$type": "color" },
+        "accent-primary": { "$value": "{color.primitive.orange.500}", "$type": "color" },
+        "accent-ink": { "$value": "#ffffff", "$type": "color" },
+        "status-success": { "$value": "{color.primitive.green.500}", "$type": "color" },
+        "status-warning": { "$value": "{color.primitive.amber.400}", "$type": "color" },
+        "status-danger": { "$value": "{color.primitive.red.400}", "$type": "color" }
+      }
+    }
+  },
+  "typography": {
+    "fontFamily": {
+      "text": { "$value": "Geist, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif", "$type": "fontFamily" },
+      "display": { "$value": "Archivo, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif", "$type": "fontFamily" },
+      "mono": { "$value": "Geist Mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace", "$type": "fontFamily" }
+    }
+  },
+  "layout": {
+    "containerMaxWidth": { "$value": "1400px", "$type": "dimension" },
+    "gutter": { "$value": "clamp(16px, 4vw, 64px)", "$type": "dimension" },
+    "radius": { "$value": "0px", "$type": "dimension" },
+    "easing": { "$value": "cubic-bezier(.2, 0, 0, 1)", "$type": "cubicBezier" }
+  }
+}

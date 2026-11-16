@@ -1,81 +1,147 @@
-# CosmIQ Web Design System & Color Specification
+# CosmIQ Design System Handbook
 
-This document defines the industry-standard color architecture, accessibility thresholds, and styling conventions for `cosmiq-os-web`.
-
----
-
-## 1. Design Philosophy
-
-CosmIQ automates laboratory WhatsApp enquiries and deterministic LIMS quotations. Its visual system communicates **analytical precision, auditability, and calm editorial authority**:
-
-- **60–30–10 Color Balance**
-  - **60% Dominant (Neutral Surfaces):** `--bg-canvas` and `--bg-surface` establish low-glare reading surfaces without clinical sterility.
-  - **30% Structural (Ink & Hairlines):** `--text-primary`, `--text-secondary`, and `--border-default` create strong typographic hierarchy and crisp 1px grid boundaries.
-  - **10% Accent (Focal Action & Telemetry):** `--accent-primary` is reserved exclusively for primary CTAs, focus rings, highlight claims, and active indicators—never large decorative fills.
-- **Sharp Geometry:** Zero border radius (`--r: 0px`, `--r-sm: 0px`) across buttons, cards, inputs, and panels.
-- **Typography Pairing:**
-  - `--display`: `Archivo` (variable width `62..125`) for hero display statements.
-  - `--text`: `Geist` for headings, UI controls, and body copy.
-  - `--mono`: `Geist Mono` for LIMS payloads, pricing rows, quotes, and telemetry pills.
+**System Name:** Tandem Warm Paper  
+**Product Scope:** `cosmiq-os-web` (Marketing Site, Interactive `/demo`, `/pilot-demo`, `/staff`, `/contact`, and `/styleguide`)  
+**Source of Truth:** [app/globals.css](../app/globals.css) · [docs/design-tokens.json](./design-tokens.json) · Live Workbench: `/styleguide`
 
 ---
 
-## 2. Three-Tier Token Architecture
+## 1. Brand & Design Principles
 
-Colors are never hardcoded in components. All styling reads **Tier 2 Semantic Tokens** defined in `app/globals.css`, which automatically switch between Light (`:root`) and Dark (`:root[data-theme="dark"]`) modes.
+CosmIQ automates WhatsApp laboratory enquiries and builds deterministic quotations directly from a lab's LIMS. Every visual token exists to reinforce **analytical authority** and **editorial clarity**:
 
-### Tier 1 → Tier 2 Semantic Token Mapping (Baseline: Tandem Warm Paper)
-
-| Category | Semantic Token | Legacy Aliases in `app/globals.css` | Light (`:root`) | Dark (`[data-theme="dark"]`) | Usage Role |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Surface** | `--bg-canvas` | `--black`, `--paper` | `#f4f1ea` | `#0a0a0a` | Primary page & viewport canvas |
-| **Surface** | `--bg-surface` | `--gray-3`, `--paper2` | `#ebe6da` | `#181715` | Cards, workflow terminals, alternating bands |
-| **Surface** | `--bg-elevated` | — | `#ffffff` | `#22201d` | Form inputs, WhatsApp chat bubbles, quote rows |
-| **Text** | `--text-primary` | `--white`, `--ink`, `--ink-pure` | `#0a0a0a` | `#f4f1ea` | Headings, primary copy, inverted section fills |
-| **Text** | `--text-secondary` | `--gray-1` | `#2d2b27` | `#b8b3a8` | Lede copy, descriptions, table details |
-| **Text** | `--text-muted` | `--mut` | `#4a4740` | `#8f8a80` | Metadata, kickers, subtle labels |
-| **Border** | `--border-default` | `--gray-2`, `--line` | `#d8d2c4` | `#2e2b27` | 1px card rules, grid dividers, table hairlines |
-| **Border** | `--border-strong` | — | `#0a0a0a` | `#f4f1ea` | High-contrast button borders & active frames |
-| **Accent** | `--accent-primary` | `--red`, `--acc` | `#ff5a1f` | `#ff5a1f` | Primary CTA fills, focus outlines, highlight spans |
-| **Accent** | `--accent-ink` | `--acc-ink` | `#ffffff` | `#ffffff` | Text & icons rendered on `--accent-primary` |
-| **Status** | `--status-success` | `--live`, `--ok` | `#146c3a` | `#4ade80` | LIMS verified badges, active pulse indicators |
-| **Status** | `--status-warning` | `--hi` | `#ffd400` | `#ffd400` | Highlighted callouts & pending caution states |
-| **Status** | `--status-danger` | `--err` | `#c81e1e` | `#f87171` | Form validation errors & critical alerts |
-
-> **Compatibility Note:** Legacy variable names (`--black`, `--white`, `--red`, `--gray-1..3`, `--paper`, `--ink`, etc.) remain wired to the semantic tokens in `app/globals.css` so existing routes (`/`, `/demo`, `/staff`, `/contact`) stay synchronized without breaking changes.
-
-### Tier 3 Component-Specific Overrides
-
-- **Inverted Sections (`.secure`, `.nav.inv`):** Swap canvas and primary ink (`background: var(--white); color: var(--black);`) to create high-contrast visual breaks for guardrail messaging.
-- **Interactive States:**
-  - `focus-visible`: `2px solid var(--red)` with `3px` offset.
-  - `disabled`: `opacity: 0.5; cursor: wait;`.
+1. **Deterministic Authority:** Data, quotes, method IDs (`AOAC 2007.01`), and telemetry are set in `Geist Mono` with `tabular-nums` alignment and 1px structural rules—never decorative gradients or soft blurs.
+2. **Editorial Warmth:** Instead of sterile pure-white (`#ffffff`) or harsh blue-black canvases, CosmIQ pairs warm archival paper (`#f4f1ea`) in Light mode with deep charcoal obsidian (`#0a0a0a`) and warm stone typography (`#b8b3a8`) in Dark mode.
+3. **The 60–30–10 Proportion Rule:**
+   - **60% Dominant Surfaces:** `--bg-canvas`, `--bg-surface`, and `--bg-elevated`.
+   - **30% Ink & Structure:** `--text-primary`, `--text-secondary`, `--text-muted`, and 1px `--border-default` rules.
+   - **10% Focal Accent:** `--accent-primary` (`#ff5a1f`), reserved exclusively for primary CTAs, focus indicators, highlight claims (`.claim`), and active step markers.
+4. **Sharp Architectural Geometry:** `0px` border radius (`--r: 0px`, `--r-sm: 0px`) across all cards, inputs, panels, quotes, and buttons.
 
 ---
 
-## 3. Accessibility & Contrast Standards (WCAG 2.1)
+## 2. Three-Tier Color Architecture
 
-All foreground/background token combinations are audited against **WCAG 2.1** relative luminance rules:
+CosmIQ uses a three-tier token model following the **W3C Design Tokens Community Group (DTCG)** convention. Components consume **Tier 2 Semantic Tokens** (or mapped legacy aliases), never raw HEX primitives.
 
-| Requirement | Minimum Ratio | Baseline Light Result | Baseline Dark Result |
+### Tier 1 — Primitive Color Scale (`:root`)
+
+| Scale Group | Token | HEX | Primary Role |
 | :--- | :--- | :--- | :--- |
-| Primary text (`--text-primary` on `--bg-canvas`) | **7.0:1 (AAA)** | `17.55:1` (AAA) | `17.55:1` (AAA) |
-| Secondary text (`--text-secondary` on `--bg-canvas`) | **4.5:1 (AA)** | `12.52:1` (AAA) | `9.48:1` (AAA) |
-| Muted text (`--text-muted` on `--bg-canvas`) | **4.5:1 (AA)** | `8.21:1` (AAA) | `5.77:1` (AA) |
-| Success status (`--status-success` on `--bg-canvas`) | **4.5:1 (AA)** | `5.75:1` (AA) | `11.36:1` (AAA) |
-| Danger status (`--status-danger` on `--bg-canvas`) | **4.5:1 (AA)** | `5.09:1` (AA) | `7.16:1` (AAA) |
-| Accent button ink (`#ffffff` on `#ff5a1f`) | **3.0:1 (AA Large)** | `3.12:1` (Large/Bold only) | `3.12:1` (Large/Bold only) |
+| **Warm Stone** | `--stone-50` | `#faf8f5` | Warm off-white highlight |
+| **Warm Stone** | `--stone-100` | `#f4f1ea` | Light mode canvas / Dark mode primary ink |
+| **Warm Stone** | `--stone-200` | `#ebe6da` | Light mode secondary surface |
+| **Warm Stone** | `--stone-300` | `#d8d2c4` | Light mode 1px border & hairline |
+| **Warm Stone** | `--stone-400` | `#b8b3a8` | Dark mode warm secondary text |
+| **Warm Stone** | `--stone-500` | `#8f8a80` | Dark mode muted metadata text |
+| **Warm Stone** | `--stone-600` | `#57524a` | Light mode muted metadata text |
+| **Warm Stone** | `--stone-700` | `#3a3630` | Light mode secondary body text |
+| **Warm Stone** | `--stone-800` | `#2e2b27` | Dark mode 1px border & hairline |
+| **Warm Stone** | `--stone-850` | `#22201d` | Dark mode elevated surface (inputs, bubbles) |
+| **Warm Stone** | `--stone-900` | `#181715` | Dark mode card & panel surface |
+| **Warm Stone** | `--stone-950` | `#0a0a0a` | Dark mode canvas / Light mode primary ink |
+| **Signal Orange** | `--orange-500` | `#ff5a1f` | Signature CosmIQ accent |
+| **Signal Orange** | `--orange-600` | `#e04812` | High-density hover / pressed reference |
+| **Status Green** | `--green-700` / `--green-500` | `#146c3a` / `#4ade80` | LIMS verified & live state (Light / Dark) |
+| **Status Amber** | `--amber-400` | `#ffd400` | Caution & approval highlight |
+| **Status Red** | `--red-600` / `--red-400` | `#c81e1e` / `#f87171` | Validation errors & alerts (Light / Dark) |
 
-> **Accent Ink Guidance:** `#ffffff` on `#ff5a1f` yields `3.12:1`, which passes WCAG AA only for large text ($\ge 18\text{px}$ bold or $\ge 24\text{px}$) and bold UI controls—never use white text on `#ff5a1f` for small body paragraphs. Switching `--accent-ink` to `#0a0a0a` increases contrast on `#ff5a1f` to `6.35:1` (AA normal text).
+### Tier 2 — Semantic Tokens (Light & Dark Modes)
+
+| Category | Semantic Token | Light (`:root`) | Dark (`[data-theme="dark"]`) | Legacy Aliases | Usage |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Surface** | `--bg-canvas` | `var(--stone-100)` (`#f4f1ea`) | `var(--stone-950)` (`#0a0a0a`) | `--black`, `--paper` | Main viewport & section canvas |
+| **Surface** | `--bg-surface` | `var(--stone-200)` (`#ebe6da`) | `var(--stone-900)` (`#181715`) | `--gray-3`, `--paper2` | Cards, panels, workflow terminals |
+| **Surface** | `--bg-elevated` | `#ffffff` | `var(--stone-850)` (`#22201d`) | — | Inputs, WhatsApp bubbles, quote rows |
+| **Text** | `--text-primary` | `var(--stone-950)` (`#0a0a0a`) | `var(--stone-100)` (`#f4f1ea`) | `--white`, `--ink`, `--ink-pure` | Display titles, headings, primary copy |
+| **Text** | `--text-secondary` | `var(--stone-700)` (`#3a3630`) | `var(--stone-400)` (`#b8b3a8`) | `--gray-1` | Lede copy, step descriptions, table values |
+| **Text** | `--text-muted` | `var(--stone-600)` (`#57524a`) | `var(--stone-500)` (`#8f8a80`) | `--mut` | Kickers, timestamps, subtle labels |
+| **Border** | `--border-default` | `var(--stone-300)` (`#d8d2c4`) | `var(--stone-800)` (`#2e2b27`) | `--gray-2`, `--line` | Structural 1px rules & table borders |
+| **Border** | `--border-strong` | `var(--stone-950)` (`#0a0a0a`) | `var(--stone-100)` (`#f4f1ea`) | — | High-contrast buttons & command boxes |
+| **Accent** | `--accent-primary` | `var(--orange-500)` (`#ff5a1f`) | `var(--orange-500)` (`#ff5a1f`) | `--red`, `--acc` | Primary CTAs, focus rings, `.claim` |
+| **Accent** | `--accent-ink` | `#ffffff` | `#ffffff` | `--acc-ink` | Foreground placed on `--accent-primary` |
+| **Status** | `--status-success` | `var(--green-700)` (`#146c3a`) | `var(--green-500)` (`#4ade80`) | `--live`, `--ok` | Verified LIMS checks & live indicators |
+| **Status** | `--status-warning` | `var(--amber-400)` (`#ffd400`) | `var(--amber-400)` (`#ffd400`) | `--hi` | Caution states & pending highlights |
+| **Status** | `--status-danger` | `var(--red-600)` (`#c81e1e`) | `var(--red-400)` (`#f87171`) | `--err` | Form errors & invalid payloads |
+
+### Tier 3 — Component Contextual Tokens
+
+- **Inverted Navigation & Guardrail Band (`.nav.inv`, `.secure`):** Swaps canvas and ink via `--nav-bg: var(--white)` / `--nav-ink: var(--black)` (or `background: var(--white); color: var(--black);`) to create full-bleed contrast transitions.
+- **Dynamic Translucent Tints:** Status tags (`.tag.ok`, `.tag.acc`, `.ai-confidence-pill`, `.bubble.out`, `.check`) compute subtle 10–12% fills via `color-mix(in srgb, <token> 10%, transparent)` so tints automatically track the active theme.
 
 ---
 
-## 4. Testing & Updating Colors with `/styleguide`
+## 3. Accessibility & WCAG 2.1 Contrast Audit
 
-CosmIQ includes a live interactive color workbench at **`/styleguide`** (`app/styleguide/page.tsx` & `components/StyleguideWorkbench.tsx`):
+Every foreground/background pairing in the canonical Tandem Warm Paper palette is verified against **WCAG 2.1** relative luminance standards:
 
-1. **Start the dev server** (`npm run dev`) and open `http://localhost:3000/styleguide`.
-2. **Compare Presets:** Switch between 5 built-in industry presets (*Tandem Warm Paper*, *Radix Sand & Aerospace*, *ISO Precision Lab*, *Bio-LIMS Botanical*, and *Technical Stone*) in Light or Dark mode.
-3. **Customize Tokens Live:** Adjust any individual semantic token via the color picker or HEX input and monitor the live **Accessibility & Contrast Matrix**.
-4. **Preview Across Pages:** Toggle **Persist across site** in the sticky toolbar, then navigate to `/`, `/demo`, or `/contact` to inspect the candidate palette on real routes.
-5. **Ship Changes:** Open Section **05 · Production Export**, copy the generated **CSS Variables (`:root`)** block, and paste it into the top of `app/globals.css`. You can also export **W3C Design Tokens (JSON)** or a **Markdown Spec** table.
+| Token Pairing | WCAG Target | Light Mode Ratio | Dark Mode Ratio |
+| :--- | :--- | :--- | :--- |
+| `--text-primary` on `--bg-canvas` | **7.0:1 (AAA)** | `17.55:1` (AAA) | `17.55:1` (AAA) |
+| `--text-primary` on `--bg-surface` | **7.0:1 (AAA)** | `15.90:1` (AAA) | `15.88:1` (AAA) |
+| `--text-secondary` on `--bg-canvas` | **4.5:1 (AA)** | `10.64:1` (AAA) | `9.48:1` (AAA) |
+| `--text-muted` on `--bg-canvas` | **4.5:1 (AA)** | `6.87:1` (AA) | `5.77:1` (AA) |
+| `--status-success` on `--bg-canvas` | **4.5:1 (AA)** | `5.75:1` (AA) | `11.36:1` (AAA) |
+| `--status-danger` on `--bg-canvas` | **4.5:1 (AA)** | `5.09:1` (AA) | `7.16:1` (AAA) |
+| `--accent-ink` (`#ffffff`) on `--accent-primary` (`#ff5a1f`) | **3.0:1 (AA Large)** | `3.12:1` (Bold/Large UI only) | `3.12:1` (Bold/Large UI only) |
+
+### Color Usage Do's and Don'ts
+
+| DO | DON'T |
+| :--- | :--- |
+| **Use `--text-secondary` (`#b8b3a8` in dark / `#3a3630` in light)** for multi-line descriptions so warm stone copy clears WCAG AAA against `#0a0a0a` and `#f4f1ea`. | **Never use `#ffffff` on `#ff5a1f` for small body paragraphs** (`3.12:1` meets AA only for large display text or bold button controls; use `#0a0a0a` for `6.35:1` if small copy is required). |
+| **Keep `--accent-primary` under 10% of viewport area** to preserve scanning hierarchy across dense LIMS tables and workflow steps. | **Never hardcode `#ffffff` or `#000000` backgrounds** on form inputs, chat bubbles, or quote cards—always use `--bg-elevated`. |
+| **Verify new tokens in both modes** on `/styleguide` using the side-by-side Light/Dark comparison view before merging. | **Never strip legacy compatibility aliases** (`--black`, `--white`, `--gray-1..3`, `--red`, `--live`) while subpages and `lib/ascii.ts` read them. |
+
+---
+
+## 4. Typography System
+
+Loaded via Google Fonts in [app/layout.tsx](../app/layout.tsx) with three purposeful font stacks:
+
+| Role | Token / Class | Font Family | Fluid Size | Weight & Line-Height | Tracking |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Display Mega** | `.mega`, `.st-line` | `Archivo` (`wdth` 62–125) | `clamp(48px, 8vw, 120px)` | `900` · `0.86`–`0.90` | `-0.02em` |
+| **Hero Title** | `.hero-title` | `Geist` | `clamp(38px, 4.4vw, 80px)` | `600` · `0.98` | `-0.05em` |
+| **Section H2** | `.h2` | `Geist` | `clamp(38px, 6.4vw, 104px)` | `600` · `0.98` | `-0.045em` |
+| **Lede** | `.lede` | `Geist` | `clamp(18px, 1.6vw, 22px)` | `400` / `600` · `1.45` | `0` |
+| **Body Default** | `body` | `Geist` | `17px` | `400` · `1.50` | `0` |
+| **Mono Telemetry** | `.mono`, `.kicker`, `.tag` | `Geist Mono` | `11px`–`14px` | `400` / `700` · `1.50` | `0.06em`–`0.08em` (upper) |
+
+- **Numeric Discipline:** Odometers (`.dl-count b`) and workflow step counters (`.install-steps > li::before`) enforce `font-variant-numeric: tabular-nums` so digits never jitter during animations or tabular quote comparisons.
+
+---
+
+## 5. Layout Grid, Spacing, Borders & Motion
+
+| Token / Rule | Value | Purpose |
+| :--- | :--- | :--- |
+| **Container** | `.wrap { max-width: 1400px; padding-inline: var(--gutter); }` | Centered editorial measure |
+| **Horizontal Gutter** | `--gutter: clamp(16px, 4vw, 64px)` | Scales smoothly from mobile to ultrawide |
+| **Breakpoints** | `@media (max-width: 900px)` · `@media (max-width: 600px)` | Collapses hero, 4-col `.facts`, 2-col `.cta-grid`, and nav links into `.mobile-menu` |
+| **Border Radius** | `--r: 0px`, `--r-sm: 0px` | Strict square edges on every interactive element |
+| **Hairline Rule** | `--b: 1px solid var(--border-default)` | Replaces drop shadows inside flat layouts |
+| **Elevation Shadows** | `--sh` (Light `0 16px 36px rgba(10,10,10,0.08)`, Dark `0 20px 48px rgba(0,0,0,0.8)`) | Used sparingly for floating menus/drawers |
+| **Motion Curve** | `--ease: cubic-bezier(.2, 0, 0, 1)` | Fast-out deceleration; `prefers-reduced-motion` reduces animations to `0.01ms` |
+
+---
+
+## 6. Component Specifications
+
+- **Buttons (`.btn`, `.btn.solid`, `.btn.ghost`, `.btn-sm`):** `0px` radius, `14px 22px` padding (`8px 16px`, `min-height: 38px` for `.btn-sm`), 1px border, inverted fill on `:hover`, and `2px solid var(--accent-primary)` `:focus-visible` ring with `3px` offset.
+- **Sticky Navigation & Theme Preservation:** Header navigation in [app/layout.tsx](../app/layout.tsx) embeds [ThemeToggle.tsx](../components/ThemeToggle.tsx) (`.theme-btn`), persisting user preference in `localStorage` (`tandem-theme`) and synchronizing before first paint via the inline `<head>` script.
+- **AI & LIMS Verification Card (`.ai-analysis-card`):** Layered `--bg-surface` container with `.ai-pulse-dot` and `.ai-confidence-pill` powered by `--status-success` (`#146c3a` light / `#4ade80` dark).
+- **Quotation Approval Panel (`.panel`, `.quote`, `.quote-row.total`):** Uses `--bg-elevated` inside `--bg-surface` so line items stay legible in both Light (`#ffffff` in `#ebe6da`) and Dark (`#22201d` in `#181715`) modes, capped by a high-contrast `.total` inversion row.
+
+---
+
+## 7. Governance & Change Workflow
+
+1. **Preview & Audit:** Visit `/styleguide` (local `http://localhost:3000/styleguide` or `https://cosmiq-os.vercel.app/styleguide`) to inspect swatches, test Light/Dark side-by-side, and verify WCAG 2.1 contrast ratios.
+2. **Site-Wide Verification:** Toggle **Persist across site** on `/styleguide` and inspect `/`, `/demo`, `/contact`, and `/staff/enquiries`.
+3. **Update Source Files Together:** When updating canonical colors, synchronize:
+   - [app/globals.css](../app/globals.css) (Tier 1 primitives & Tier 2 semantic mappings)
+   - [docs/design-tokens.json](./design-tokens.json) (W3C DTCG machine-readable tokens)
+   - [components/StyleguideWorkbench.tsx](../components/StyleguideWorkbench.tsx) (`tandem-default` preset)
+   - This handbook ([docs/DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md))
+4. **Ship:** Run `npm run check` and `npm run build` before committing and deploying.

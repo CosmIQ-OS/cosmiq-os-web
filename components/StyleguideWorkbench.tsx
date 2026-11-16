@@ -141,20 +141,107 @@ const TOKEN_META: TokenMeta[] = [
   },
 ];
 
+const PRIMITIVE_SCALE: Array<{ token: string; hex: string; role: string }> = [
+  { token: "--stone-50", hex: "#faf8f5", role: "Warm highlight" },
+  { token: "--stone-100", hex: "#f4f1ea", role: "Light canvas" },
+  { token: "--stone-200", hex: "#ebe6da", role: "Light surface" },
+  { token: "--stone-300", hex: "#d8d2c4", role: "Light border" },
+  { token: "--stone-400", hex: "#b8b3a8", role: "Dark secondary" },
+  { token: "--stone-500", hex: "#8f8a80", role: "Dark muted" },
+  { token: "--stone-600", hex: "#57524a", role: "Light muted" },
+  { token: "--stone-700", hex: "#3a3630", role: "Light secondary" },
+  { token: "--stone-800", hex: "#2e2b27", role: "Dark border" },
+  { token: "--stone-850", hex: "#22201d", role: "Dark elevated" },
+  { token: "--stone-900", hex: "#181715", role: "Dark surface" },
+  { token: "--stone-950", hex: "#0a0a0a", role: "Dark canvas / Ink" },
+  { token: "--orange-500", hex: "#ff5a1f", role: "Brand accent" },
+  { token: "--orange-600", hex: "#e04812", role: "Accent hover" },
+  { token: "--green-700", hex: "#146c3a", role: "Light success" },
+  { token: "--green-500", hex: "#4ade80", role: "Dark success" },
+  { token: "--amber-400", hex: "#ffd400", role: "Warning" },
+  { token: "--red-600", hex: "#c81e1e", role: "Light danger" },
+  { token: "--red-400", hex: "#f87171", role: "Dark danger" },
+];
+
+const TYPE_SPECS: Array<{
+  role: string;
+  selector: string;
+  family: string;
+  size: string;
+  weight: string;
+  lineHeight: string;
+  tracking: string;
+  sample: string;
+  sampleClass?: string;
+}> = [
+  {
+    role: "Display Mega",
+    selector: ".mega / .st-line",
+    family: "Archivo (wdth 62..125)",
+    size: "clamp(48px, 8vw, 120px)",
+    weight: "900",
+    lineHeight: "0.86–0.90",
+    tracking: "-0.02em",
+    sample: "Not a guess.",
+    sampleClass: "mega",
+  },
+  {
+    role: "Section H2",
+    selector: ".h2",
+    family: "Geist",
+    size: "clamp(38px, 6.4vw, 104px)",
+    weight: "600",
+    lineHeight: "0.98",
+    tracking: "-0.045em",
+    sample: "Two agents on top of your LIMS",
+  },
+  {
+    role: "Lede Copy",
+    selector: ".lede",
+    family: "Geist",
+    size: "clamp(18px, 1.6vw, 22px)",
+    weight: "400 / 600",
+    lineHeight: "1.45",
+    tracking: "0",
+    sample: "Your LIMS stays the source of truth.",
+  },
+  {
+    role: "Body Default",
+    selector: "body",
+    family: "Geist",
+    size: "17px",
+    weight: "400",
+    lineHeight: "1.50",
+    tracking: "0",
+    sample: "Prices, taxes and turnaround times come strictly from your database.",
+  },
+  {
+    role: "Technical Mono",
+    selector: ".mono / .kicker / .tag",
+    family: "Geist Mono",
+    size: "11px–14px",
+    weight: "400 / 700",
+    lineHeight: "1.50",
+    tracking: "0.06em (kicker)",
+    sample: "AOAC 2007.01 · NABL ACCREDITED · ₹ 9,440.00",
+    sampleClass: "mono",
+  },
+];
+
 const PRESETS: PalettePreset[] = [
   {
     id: "tandem-default",
     code: "01",
     name: "Tandem Warm Paper",
-    subtitle: "Current Baseline",
-    inspiration: "Warm editorial parchment paired with stark ink and high-visibility orange.",
+    subtitle: "Active Site Standard",
+    inspiration: "Warm editorial parchment paired with deep ink, readable stone neutrals, and high-visibility orange.",
     light: {
       bgCanvas: "#f4f1ea",
       bgSurface: "#ebe6da",
       bgElevated: "#ffffff",
       textPrimary: "#0a0a0a",
-      textSecondary: "#2d2b27",
-      textMuted: "#4a4740",
+      textSecondary: "#3a3630",
+      textMuted: "#57524a",
       borderDefault: "#d8d2c4",
       accentPrimary: "#ff5a1f",
       accentInk: "#ffffff",
@@ -586,6 +673,7 @@ export default function StyleguideWorkbench() {
 
   const persistRef = useRef<boolean>(false);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastDispatchedModeRef = useRef<ThemeMode | null>(null);
 
   useEffect(() => {
     persistRef.current = persistSite;
@@ -597,6 +685,9 @@ export default function StyleguideWorkbench() {
       const savedTheme = localStorage.getItem("tandem-theme");
       if (savedTheme === "dark") {
         setMode("dark");
+        lastDispatchedModeRef.current = "dark";
+      } else {
+        lastDispatchedModeRef.current = "light";
       }
       const savedStateRaw = localStorage.getItem(PREVIEW_STATE_KEY);
       if (savedStateRaw) {
@@ -618,7 +709,17 @@ export default function StyleguideWorkbench() {
       setHydrated(true);
     }
 
+    const onExternalTheme = (event: Event) => {
+      const nextMode = (event as CustomEvent<ThemeMode>).detail;
+      if (nextMode === "light" || nextMode === "dark") {
+        lastDispatchedModeRef.current = nextMode;
+        setMode((prev) => (prev === nextMode ? prev : nextMode));
+      }
+    };
+    window.addEventListener("cosmiq-theme-change", onExternalTheme);
+
     return () => {
+      window.removeEventListener("cosmiq-theme-change", onExternalTheme);
       if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
       if (!persistRef.current) {
         const root = document.documentElement;
@@ -679,6 +780,10 @@ export default function StyleguideWorkbench() {
     }
 
     refreshTheme();
+    if (lastDispatchedModeRef.current !== mode) {
+      lastDispatchedModeRef.current = mode;
+      window.dispatchEvent(new CustomEvent<ThemeMode>("cosmiq-theme-change", { detail: mode }));
+    }
   }, [hydrated, mode, palette, persistSite, presetId]);
 
   const activePreset = PRESETS.find((p) => p.id === presetId) ?? PRESETS[0];
@@ -1026,6 +1131,35 @@ export default function StyleguideWorkbench() {
         </div>
       </section>
 
+      {/* Section 01B: Tier 1 Primitive Color Scale */}
+      <section className="sg-section">
+        <div className="wrap">
+          <div className="sg-section-head">
+            <div>
+              <div className="sg-eyebrow">01B · Tier 1 Foundations</div>
+              <h2>Primitive Color Scale (Tandem Warm Paper)</h2>
+            </div>
+            <p>
+              Raw palette building blocks defined in <code>:root</code> inside <code>app/globals.css</code>. Components
+              consume Tier 2 semantic tokens rather than referencing primitives directly.
+            </p>
+          </div>
+
+          <div className="sg-prim-grid">
+            {PRIMITIVE_SCALE.map((p) => (
+              <div key={p.token} className="sg-prim-chip">
+                <div className="sg-prim-color" style={{ background: p.hex }} />
+                <div className="sg-prim-info">
+                  <strong>{p.token}</strong>
+                  <span>{p.hex.toUpperCase()}</span>
+                  <span>{p.role}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Section 02: Accessibility & Contrast Matrix */}
       <section className="sg-section">
         <div className="wrap">
@@ -1300,12 +1434,141 @@ export default function StyleguideWorkbench() {
         </div>
       </section>
 
-      {/* Section 05: Export Industry-Standard Code & Spec */}
+      {/* Section 05: Typography & Hierarchy Specification */}
       <section className="sg-section">
         <div className="wrap">
           <div className="sg-section-head">
             <div>
-              <div className="sg-eyebrow">05 · Production Export</div>
+              <div className="sg-eyebrow">05 · Type Architecture</div>
+              <h2>Typography &amp; Hierarchy Specification</h2>
+            </div>
+            <p>
+              Three-font editorial system pairing variable-width <code>Archivo</code> display headers,{" "}
+              <code>Geist</code> UI &amp; reading copy, and <code>Geist Mono</code> telemetry.
+            </p>
+          </div>
+
+          <div className="sg-table-wrap">
+            <table className="sg-type-table">
+              <thead>
+                <tr>
+                  <th>Role &amp; Selector</th>
+                  <th>Family &amp; Size</th>
+                  <th>Weight / LH / Track</th>
+                  <th>Live Specimen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {TYPE_SPECS.map((t) => (
+                  <tr key={t.role}>
+                    <td>
+                      <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>{t.role}</div>
+                      <code className="mono" style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
+                        {t.selector}
+                      </code>
+                    </td>
+                    <td>
+                      <div style={{ color: "var(--text-primary)", fontSize: 13.5 }}>{t.family}</div>
+                      <code className="mono" style={{ fontSize: 11.5, color: "var(--accent-primary)" }}>
+                        {t.size}
+                      </code>
+                    </td>
+                    <td className="mono" style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                      {t.weight} · {t.lineHeight} · {t.tracking}
+                    </td>
+                    <td>
+                      <span
+                        className={t.sampleClass}
+                        style={
+                          t.sampleClass === "mega"
+                            ? { fontSize: "clamp(28px, 3vw, 42px)", color: "var(--text-primary)" }
+                            : t.sampleClass === "mono"
+                              ? { fontSize: 12.5, color: "var(--status-success)" }
+                              : { fontSize: 16, color: "var(--text-primary)" }
+                        }
+                      >
+                        {t.sample}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 06: Layout Geometry, Spacing & Do's / Don'ts */}
+      <section className="sg-section">
+        <div className="wrap">
+          <div className="sg-section-head">
+            <div>
+              <div className="sg-eyebrow">06 · Standards &amp; Governance</div>
+              <h2>Layout Geometry, Motion &amp; Usage Rules</h2>
+            </div>
+            <p>
+              Core spatial constraints, 0px border geometry, and the Do / Don&apos;t rules enforced across{" "}
+              <code>cosmiq-os-web</code>.
+            </p>
+          </div>
+
+          <div className="sg-spec-grid">
+            <div className="sg-spec-card">
+              <code>--gutter</code>
+              <b>clamp(16px, 4vw, 64px)</b>
+              <span>Fluid horizontal page margin up to max-width 1400px.</span>
+            </div>
+            <div className="sg-spec-card">
+              <code>--r / --r-sm</code>
+              <b>0px (Sharp)</b>
+              <span>Zero border radius across buttons, panels, inputs, and cards.</span>
+            </div>
+            <div className="sg-spec-card">
+              <code>--b / --line</code>
+              <b>1px solid var(--border-default)</b>
+              <span>Crisp structural hairlines separate sections, tables, and cards.</span>
+            </div>
+            <div className="sg-spec-card">
+              <code>--ease</code>
+              <b>cubic-bezier(.2, 0, 0, 1)</b>
+              <span>Fast-out deceleration curve; honors prefers-reduced-motion.</span>
+            </div>
+          </div>
+
+          <div className="sg-dodont-grid">
+            <div className="sg-do-card">
+              <div className="sg-eyebrow" style={{ color: "var(--status-success)", marginBottom: 0 }}>
+                DO · SYSTEM STANDARDS
+              </div>
+              <ul>
+                <li>Follow the 60-30-10 balance: neutral warm surfaces (60%), ink &amp; 1px rules (30%), orange accent (10%).</li>
+                <li>Use Tier 2 semantic variables (<code>--bg-canvas</code>, <code>--text-secondary</code>, <code>--accent-primary</code>) in new components.</li>
+                <li>Keep warm dark-mode secondary copy at <code>#b8b3a8</code> (9.48:1 AAA) and muted text at <code>#8f8a80</code> (5.77:1 AA).</li>
+                <li>Pair <code>font-variant-numeric: tabular-nums</code> with <code>Geist Mono</code> for quotes, prices, and LIMS timestamps.</li>
+              </ul>
+            </div>
+
+            <div className="sg-dont-card">
+              <div className="sg-eyebrow" style={{ color: "var(--status-danger)", marginBottom: 0 }}>
+                DON&apos;T · ANTI-PATTERNS
+              </div>
+              <ul>
+                <li>Never place small body copy in <code>#ffffff</code> on <code>#ff5a1f</code> (3.12:1 contrast passes large/bold buttons only).</li>
+                <li>Never hardcode raw HEX values like <code>#ffffff</code> or <code>#000000</code> inside dark-mode-aware inputs or cards.</li>
+                <li>Never round corners on buttons, quote panels, or form fields—preserve the sharp <code>0px</code> architectural frame.</li>
+                <li>Never use <code>--accent-primary</code> for large section backgrounds; reserve high-saturation fills for CTAs and focal pills.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 07: Export Industry-Standard Code & Spec */}
+      <section className="sg-section">
+        <div className="wrap">
+          <div className="sg-section-head">
+            <div>
+              <div className="sg-eyebrow">07 · Production Export</div>
               <h2>Export CSS Variables, W3C Tokens &amp; Markdown Spec</h2>
             </div>
             <p>

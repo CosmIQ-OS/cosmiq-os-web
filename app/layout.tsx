@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import MobileMenu from "@/components/MobileMenu";
+import ThemeToggle from "@/components/ThemeToggle";
 import { NAV, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -66,6 +67,7 @@ try {
               ))}
             </nav>
             <div className="nav-end">
+              <ThemeToggle />
               <Link href="/contact" className="btn btn-sm nav-cta">
                 <span className="long">Request a pilot →</span>
                 <span className="short">Contact</span>
@@ -95,6 +97,9 @@ try {
               </li>
               <li>
                 <Link href="/contact">Request pilot</Link>
+              </li>
+              <li>
+                <Link href="/styleguide">Design System</Link>
               </li>
               <li>
                 <Link href="/privacy">Privacy</Link>
