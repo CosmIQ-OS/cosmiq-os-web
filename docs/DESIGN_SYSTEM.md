@@ -32,8 +32,8 @@ Colors are never hardcoded in components. All styling reads **Tier 2 Semantic To
 | **Surface** | `--bg-surface` | `--gray-3`, `--paper2` | `#ebe6da` | `#181715` | Cards, workflow terminals, alternating bands |
 | **Surface** | `--bg-elevated` | — | `#ffffff` | `#22201d` | Form inputs, WhatsApp chat bubbles, quote rows |
 | **Text** | `--text-primary` | `--white`, `--ink`, `--ink-pure` | `#0a0a0a` | `#f4f1ea` | Headings, primary copy, inverted section fills |
-| **Text** | `--text-secondary` | `--gray-1` | `#2d2b27` | `#9e9a90` | Lede copy, descriptions, table details |
-| **Text** | `--text-muted` | `--mut` | `#4a4740` | `#9e9a90` | Metadata, kickers, subtle labels |
+| **Text** | `--text-secondary` | `--gray-1` | `#3a3630` | `#afa99e` | Lede copy, descriptions, table details |
+| **Text** | `--text-muted` | `--mut` | `#57524a` | `#9e9a90` | Metadata, kickers, subtle labels |
 | **Border** | `--border-default` | `--gray-2`, `--line` | `#d8d2c4` | `#2e2b27` | 1px card rules, grid dividers, table hairlines |
 | **Border** | `--border-strong` | — | `#0a0a0a` | `#f4f1ea` | High-contrast button borders & active frames |
 | **Accent** | `--accent-primary` | `--red`, `--acc` | `#ff5a1f` | `#ff5a1f` | Primary CTA fills, focus outlines, highlight spans |
@@ -60,8 +60,8 @@ All foreground/background token combinations are audited against **WCAG 2.1** re
 | Requirement | Minimum Ratio | Baseline Light Result | Baseline Dark Result |
 | :--- | :--- | :--- | :--- |
 | Primary text (`--text-primary` on `--bg-canvas`) | **7.0:1 (AAA)** | `17.55:1` (AAA) | `17.55:1` (AAA) |
-| Secondary text (`--text-secondary` on `--bg-canvas`) | **4.5:1 (AA)** | `12.52:1` (AAA) | `7.05:1` (AAA) |
-| Muted text (`--text-muted` on `--bg-canvas`) | **4.5:1 (AA)** | `8.21:1` (AAA) | `7.05:1` (AAA) |
+| Secondary text (`--text-secondary` on `--bg-canvas`) | **4.5:1 (AA)** | `10.64:1` (AAA) | `8.48:1` (AAA) |
+| Muted text (`--text-muted` on `--bg-canvas`) | **4.5:1 (AA)** | `6.87:1` (AA) | `7.05:1` (AAA) |
 | Success status (`--status-success` on `--bg-canvas`) | **4.5:1 (AA)** | `5.75:1` (AA) | `11.36:1` (AAA) |
 | Danger status (`--status-danger` on `--bg-canvas`) | **4.5:1 (AA)** | `5.09:1` (AA) | `7.16:1` (AAA) |
 | Accent button ink (`#ffffff` on `#ff5a1f`) | **3.0:1 (AA Large)** | `3.12:1` (Large/Bold only) | `3.12:1` (Large/Bold only) |

@@ -2,7 +2,7 @@
 :root {
   --black: #f4f1ea;    /* Warm cream paper background */
   --white: #0a0a0a;    /* Deep ink text */
-  --gray-1: #2d2b27;   /* secondary / readable dark stone text */
+  --gray-1: #3a3630;   /* secondary / readable warm dark stone text */
   --gray-2: #d8d2c4;   /* rules, borders, inactive */
   --gray-3: #ebe6da;   /* grid lines, subtle cards, secondary surface */
   --live: #146c3a;     /* active/verified green */
@@ -18,7 +18,7 @@
   --paper2: #ebe6da;
   --ink: #0a0a0a;
   --ink-pure: #0a0a0a;
-  --mut: #4a4740;
+  --mut: #57524a;
   --acc: #ff5a1f;
   --acc-ink: #ffffff;
   --ok: #146c3a;
@@ -51,7 +51,7 @@
 :root[data-theme="dark"] {
   --black: #0a0a0a;
   --white: #f4f1ea;
-  --gray-1: #9e9a90;
+  --gray-1: #afa99e;
   --gray-2: #2e2b27;
   --gray-3: #181715;
   --live: #4ade80;
