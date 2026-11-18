@@ -1,1 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#000000"/><rect x="4" y="4" width="56" height="56" rx="11" fill="none" stroke="#26262a" stroke-width="2"/><text x="32" y="45" text-anchor="middle" fill="#ffffff" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-weight="800" font-size="38">C</text><circle cx="49" cy="15" r="5" fill="#ff3b30"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <rect width="200" height="200" fill="#0a0a0a"/>
+  <rect x="2" y="2" width="196" height="196" fill="none" stroke="#2e2b27" stroke-width="2"/>
+  <polygon points="34.53,58.00 100.00,20.20 142.56,44.77 127.89,53.24 100.00,37.13 63.86,58.00 100.00,78.87 127.89,62.76 142.56,71.23 100.00,95.80" fill="#f4f1ea"/>
+  <polygon points="103.93,58.00 117.02,50.44 152.38,50.44 165.48,58.00 152.38,65.56 117.02,65.56" fill="#ff5a1f"/>
+  <polygon points="96.36,102.10 30.89,64.30 30.89,139.90 96.36,177.70 96.36,154.26 81.70,145.80 81.70,152.30 45.55,131.43 45.55,89.70 81.70,110.57 81.70,117.07 96.36,125.54" fill="#e2ddd2"/>
+  <polygon points="103.64,102.10 169.11,64.30 169.11,81.23 143.71,95.90 143.71,137.63 169.11,122.97 169.11,139.90 103.64,177.70 103.64,160.77 129.04,146.10 129.04,104.37 103.64,119.03" fill="#b8b3a8"/>
+</svg>

@@ -56,8 +56,30 @@ try {
 
         <header className="nav" aria-label="Main">
           <div className="nav-in">
-            <Link className="wordmark" href="/">
-              CosmIQ
+            <Link className="wordmark" href="/" aria-label="CosmIQ OS">
+              <svg className="wordmark-cube" viewBox="0 0 200 200" width="28" height="28" aria-hidden="true">
+                <polygon
+                  points="34.53,58.00 100.00,20.20 142.56,44.77 127.89,53.24 100.00,37.13 63.86,58.00 100.00,78.87 127.89,62.76 142.56,71.23 100.00,95.80"
+                  fill="currentColor"
+                />
+                <polygon
+                  points="103.93,58.00 117.02,50.44 152.38,50.44 165.48,58.00 152.38,65.56 117.02,65.56"
+                  fill="var(--accent-primary)"
+                />
+                <polygon
+                  points="96.36,102.10 30.89,64.30 30.89,139.90 96.36,177.70 96.36,154.26 81.70,145.80 81.70,152.30 45.55,131.43 45.55,89.70 81.70,110.57 81.70,117.07 96.36,125.54"
+                  fill="currentColor"
+                  fillOpacity="0.86"
+                />
+                <polygon
+                  points="103.64,102.10 169.11,64.30 169.11,81.23 143.71,95.90 143.71,137.63 169.11,122.97 169.11,139.90 103.64,177.70 103.64,160.77 129.04,146.10 129.04,104.37 103.64,119.03"
+                  fill="currentColor"
+                  fillOpacity="0.68"
+                />
+              </svg>
+              <span className="wordmark-text">
+                CosmIQ<sup className="wordmark-os">OS</sup>
+              </span>
             </Link>
             <nav className="links" aria-label="Primary">
               {NAV.map((l) => (

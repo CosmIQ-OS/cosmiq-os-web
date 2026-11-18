@@ -204,11 +204,32 @@ main, footer { position: relative; z-index: 1; }
   gap: 16px;
 }
 .wordmark {
-  font: 800 22px/1 var(--display);
-  font-variation-settings: "wdth" 110;
-  letter-spacing: -.01em;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font: 700 22px/1 var(--text);
+  letter-spacing: -.045em;
   text-decoration: none;
   color: var(--nav-ink);
+}
+.wordmark-cube {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  display: block;
+}
+.wordmark-text {
+  display: inline-flex;
+  align-items: flex-start;
+  line-height: 1;
+}
+.wordmark-os {
+  font: 700 10px/1 var(--mono);
+  letter-spacing: 0.06em;
+  color: var(--accent-primary);
+  margin-left: 2px;
+  margin-top: -2px;
+  top: 0;
 }
 .nav ul, .nav .links {
   display: flex;
