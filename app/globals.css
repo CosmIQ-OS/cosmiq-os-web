@@ -1310,9 +1310,22 @@ table.t th { font-family: var(--mono); font-size: 12px; text-transform: uppercas
 
 /* Minimal Vision-First Homepage & Services (/ & /services) --------------- */
 .min-hero {
+  min-height: calc(100vh - 74px);
+  min-height: calc(100dvh - 74px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   border-bottom: 1px solid var(--border-default);
-  padding: clamp(56px, 11vh, 132px) 0 clamp(48px, 9vh, 108px);
+  padding: clamp(36px, 6vh, 80px) 0 clamp(28px, 4vh, 48px);
   background: var(--bg-canvas);
+}
+
+.min-hero > .wrap {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .min-hero-in {
@@ -1320,6 +1333,7 @@ table.t th { font-family: var(--mono); font-size: 12px; text-transform: uppercas
 }
 
 .min-hero-grid {
+  margin: auto 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(240px, 340px);
   gap: clamp(32px, 5vw, 72px);
@@ -1787,7 +1801,9 @@ table.t th { font-family: var(--mono); font-size: 12px; text-transform: uppercas
 
 @media (max-width: 900px) {
   .min-hero {
-    padding: 32px 0 36px;
+    min-height: calc(100vh - 66px);
+    min-height: calc(100svh - 66px);
+    padding: clamp(18px, 2.8vh, 28px) 0 clamp(18px, 2.6vh, 26px);
   }
 
   .min-hero-grid,
@@ -1799,38 +1815,42 @@ table.t th { font-family: var(--mono); font-size: 12px; text-transform: uppercas
   }
 
   .min-hero-grid {
-    gap: 24px;
+    gap: clamp(14px, 2.2vh, 22px);
+    margin: auto 0;
+  }
+
+  .min-hero-cube {
+    order: -1;
+    justify-content: center;
+    padding: 4px 0 2px;
+  }
+
+  .min-cube-svg {
+    width: clamp(136px, 36vw, 172px);
   }
 
   .min-eyebrow {
-    margin-bottom: 14px;
+    margin-bottom: 10px;
     font-size: 11px;
   }
 
   .min-hero-title {
-    font-size: clamp(34px, 9.2vw, 52px);
-    margin-bottom: 18px;
+    font-size: clamp(34px, 8.8vw, 48px);
+    margin-bottom: 14px;
   }
 
   .min-hero-sub {
-    font-size: 16.5px;
-    line-height: 1.52;
-    margin-bottom: 24px;
-  }
-
-  .min-hero-cube {
-    justify-content: center;
-    padding: 4px 0;
-  }
-
-  .min-cube-svg {
-    width: clamp(164px, 44vw, 210px);
+    font-size: 16px;
+    line-height: 1.5;
+    margin-bottom: 20px;
   }
 
   .min-proof {
-    margin-top: 28px;
-    padding-top: 18px;
-    gap: 10px 20px;
+    margin-top: 20px;
+    padding-top: 14px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
     font-size: 12px;
   }
 
