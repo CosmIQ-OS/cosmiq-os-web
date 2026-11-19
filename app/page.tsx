@@ -5,9 +5,9 @@ import { SECURITY_PILLARS, VISION_BOUNDARY } from "@/lib/services";
 export default function Home() {
   return (
     <>
-      {/* Block 1: Minimal Above-the-Fold Hero with Right 3D Rotating C·Q·I Cube */}
+      {/* Block 1: Above-the-Fold Hero — Eye-Zone Diagram + Thumb-Zone Copy & Buttons + Proof Ledger */}
       <section className="min-hero" id="top" aria-labelledby="heroTitle">
-        <div className="wrap">
+        <div className="wrap min-hero-wrap">
           <div className="min-hero-grid">
             <div className="min-hero-copy">
               <p className="min-eyebrow">
@@ -36,23 +36,63 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="min-hero-cube" aria-label="Animated 3D CosmIQ OS C·Q·I Isometric Cube">
-              <RotatingCube className="min-cube-svg" size={300} speed={0.45} />
+            <div className="min-hero-cube" aria-label="Animated 3D CosmIQ OS Human and AI Operating Diagram">
+              <div className="min-engine-panel">
+                <div className="min-engine-head">
+                  <span>COSMIQ OPERATING BOUNDARY</span>
+                  <span className="min-engine-live">
+                    <span className="trust-dot" aria-hidden="true" />
+                    SAFE BY DESIGN
+                  </span>
+                </div>
+
+                <div className="min-engine-body">
+                  <div className="min-engine-side">
+                    <span className="min-engine-kicker">AI HANDLES</span>
+                    <strong>Cut the noise</strong>
+                    <ul>
+                      <li>24/7 customer replies</li>
+                      <li>System record lookup</li>
+                      <li>Draft quotes &amp; docs</li>
+                    </ul>
+                  </div>
+
+                  <div className="min-engine-core">
+                    <RotatingCube className="min-cube-svg" size={168} speed={0.48} />
+                    <span className="min-engine-core-tag">C·Q·I GUARDRAILS</span>
+                  </div>
+
+                  <div className="min-engine-side min-engine-side-human">
+                    <span className="min-engine-kicker min-engine-kicker-accent">HUMAN OWNS</span>
+                    <strong>Craft the core</strong>
+                    <ul>
+                      <li>1-tap staff approval</li>
+                      <li>Customer relationships</li>
+                      <li>Judgment &amp; exceptions</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="min-engine-foot">
+                  <span>INPUT: WhatsApp · Web · Email · CRM / ERP / LIMS</span>
+                  <span>OUTPUT: Verified &amp; Logged</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <ul className="min-proof" aria-label="Core guarantees">
+          <ul className="min-ledger" aria-label="Core guarantees">
             <li>
-              <span className="trust-dot" aria-hidden="true" />
-              Works with your existing tools
+              <strong>24/7 Instant Intake</strong>
+              <span>Works across WhatsApp, web &amp; your existing tools</span>
             </li>
             <li>
-              <span className="trust-dot" aria-hidden="true" />
-              Human approval by default
+              <strong>0% AI Guesswork</strong>
+              <span>Deterministic backend code calculates all numbers</span>
             </li>
             <li>
-              <span className="trust-dot" aria-hidden="true" />
-              Zero AI guesswork on numbers
+              <strong>100% Human Control</strong>
+              <span>Your team approves what leaves the building</span>
             </li>
           </ul>
         </div>
