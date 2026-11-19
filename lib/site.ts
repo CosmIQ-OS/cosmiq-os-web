@@ -3,15 +3,13 @@ export const SITE_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
   ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
   : "https://cosmiq-os.vercel.app";
 
-export const SITE_NAME = "CosmIQ";
+export const SITE_NAME = "CosmIQ OS";
 
 export const SITE_DESCRIPTION =
-  "AI agents on top of your LIMS: WhatsApp enquiries turned into accurate quotations, and customer follow-ups your team approves. Prices and services always come from your LIMS.";
+  "We help businesses understand where AI belongs and where human effort belongs — then build secure, deterministic AI agents on top of the tools you already use.";
 
 export const NAV = [
-  { href: "/#agents", label: "Agents" },
-  { href: "/#workflow", label: "How it works" },
+  { href: "/#vision", label: "Vision" },
+  { href: "/services", label: "Services" },
   { href: "/demo", label: "Demo" },
-  { href: "/#pilot", label: "Pilot" },
-  { href: "/#faq", label: "FAQ" },
 ];

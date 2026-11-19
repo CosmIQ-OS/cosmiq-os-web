@@ -14,7 +14,7 @@ export default function LeadForm() {
   function check(p: { name: string; domain: string; email: string }): Errors {
     const e: Errors = {};
     if (!p.name) e.name = "Please enter your name.";
-    if (!p.domain) e.domain = "Please enter your lab or organisation.";
+    if (!p.domain) e.domain = "Please enter your company or organisation.";
     if (!p.email) e.email = "Please enter your email.";
     else if (!EMAIL_RE.test(p.email)) e.email = "That email doesn't look right.";
     if (selected.length === 0) e.automations = "Pick at least one area (or All of the above).";
@@ -39,10 +39,20 @@ export default function LeadForm() {
     setErrors(found);
     const first = Object.keys(found)[0];
     if (first) {
-      const missing = [!payload.name && "Name", !payload.domain && "Lab / organisation", !payload.email && "Email"].filter(Boolean) as string[];
-      const list = missing.length > 1 ? `${missing.slice(0, -1).join(", ")} and ${missing[missing.length - 1]}` : missing[0];
+      const missing = [
+        !payload.name && "Name",
+        !payload.domain && "Company / organisation",
+        !payload.email && "Email",
+      ].filter(Boolean) as string[];
+      const list =
+        missing.length > 1
+          ? `${missing.slice(0, -1).join(", ")} and ${missing[missing.length - 1]}`
+          : missing[0];
       setMsg({ kind: "err", text: list ? `Please fill ${list}.` : "Please fix the highlighted fields." });
-      const target = first === "automations" ? form.querySelector<HTMLInputElement>('input[name="automations"]') : form.elements.namedItem(first);
+      const target =
+        first === "automations"
+          ? form.querySelector<HTMLInputElement>('input[name="automations"]')
+          : form.elements.namedItem(first);
       (target as HTMLElement | null)?.focus();
       return;
     }
@@ -55,12 +65,18 @@ export default function LeadForm() {
       });
       const out = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(out.error || "Submission failed.");
-      setMsg({ kind: "ok", text: `Received. Reference #${String(out.id).slice(-6)} — we'll be in touch with a pilot plan.` });
+      setMsg({
+        kind: "ok",
+        text: `Received. Reference #${String(out.id).slice(-6)} — we'll get back to you shortly.`,
+      });
       form.reset();
       setSelected([]);
     } catch (err) {
       // No silent local fallback: surface failure so no lead is lost.
-      setMsg({ kind: "err", text: err instanceof Error ? err.message : "Could not send. Please try again." });
+      setMsg({
+        kind: "err",
+        text: err instanceof Error ? err.message : "Could not send. Please try again.",
+      });
     } finally {
       setBusy(false);
     }
@@ -72,41 +88,108 @@ export default function LeadForm() {
     if (errors[name]) setErrors(({ [name]: _cleared, ...rest }) => rest);
   }
 
-  const invalid = (k: keyof Errors) => (errors[k] ? { "aria-invalid": true, "aria-describedby": `err-${k}` } : {});
-  const errText = (k: keyof Errors) => errors[k] && <span className="field-err" id={`err-${k}`}>{errors[k]}</span>;
+  const invalid = (k: keyof Errors) =>
+    errors[k] ? { "aria-invalid": true, "aria-describedby": `err-${k}` } : {};
+  const errText = (k: keyof Errors) =>
+    errors[k] && (
+      <span className="field-err" id={`err-${k}`}>
+        {errors[k]}
+      </span>
+    );
 
   return (
-    <form className="form" onSubmit={onSubmit} onChange={onChange} noValidate aria-label="Pilot enquiry form">
+    <form className="form" onSubmit={onSubmit} onChange={onChange} noValidate aria-label="Contact enquiry form">
       <div className="frow">
-        <div><label className="f">Name*<input name="name" required placeholder="Asha Menon" autoComplete="name" {...invalid("name")} /></label>{errText("name")}</div>
-        <label className="f">Role<input name="role" placeholder="Lab manager / QA head" autoComplete="organization-title" /></label>
+        <div>
+          <label className="f">
+            Name*
+            <input name="name" required placeholder="Asha Menon" autoComplete="name" {...invalid("name")} />
+          </label>
+          {errText("name")}
+        </div>
+        <label className="f">
+          Role
+          <input name="role" placeholder="Founder / Operations head" autoComplete="organization-title" />
+        </label>
       </div>
       <div className="frow">
-        <div><label className="f">Lab / organisation*<input name="domain" required placeholder="Your lab's name" autoComplete="organization" {...invalid("domain")} /></label>{errText("domain")}</div>
-        <div><label className="f">Email ID*<input name="email" type="email" required placeholder="you@yourlab.com" autoComplete="email" {...invalid("email")} /></label>{errText("email")}</div>
+        <div>
+          <label className="f">
+            Company / organisation*
+            <input
+              name="domain"
+              required
+              placeholder="Your company name"
+              autoComplete="organization"
+              {...invalid("domain")}
+            />
+          </label>
+          {errText("domain")}
+        </div>
+        <div>
+          <label className="f">
+            Email ID*
+            <input name="email" type="email" required placeholder="you@company.com" autoComplete="email" {...invalid("email")} />
+          </label>
+          {errText("email")}
+        </div>
       </div>
-      <label className="f">Phone / WhatsApp (optional)<input name="phone" type="tel" placeholder="+91 …" autoComplete="tel" /></label>
+      <label className="f">
+        Phone / WhatsApp (optional)
+        <input name="phone" type="tel" placeholder="+91 …" autoComplete="tel" />
+      </label>
       <div>
-        <span className="field-label" id="automations-label">What should we automate?*</span>
-        <div className={`checks${errors.automations ? " invalid" : ""}`} role="group" aria-labelledby="automations-label"
-          aria-describedby={errors.automations ? "err-automations" : undefined}>
-          {AUTOMATION_OPTIONS.map((o) =>
-            <label key={o} style={o === "All of the above" ? { fontWeight: 700 } : undefined}>
-              <input type="checkbox" name="automations" value={o}
-                checked={all || selected.includes(o)} disabled={all && o !== "All of the above"}
+        <span className="field-label" id="automations-label">
+          What would you like to automate?*
+        </span>
+        <div
+          className={`checks${errors.automations ? " invalid" : ""}`}
+          role="group"
+          aria-labelledby="automations-label"
+          aria-describedby={errors.automations ? "err-automations" : undefined}
+        >
+          {AUTOMATION_OPTIONS.map((o) => (
+            <label
+              key={o}
+              style={o === "All of the above" ? { fontWeight: 700, gridColumn: "1 / -1" } : undefined}
+            >
+              <input
+                type="checkbox"
+                name="automations"
+                value={o}
+                checked={all || selected.includes(o)}
+                disabled={all && o !== "All of the above"}
                 onChange={(event) => {
                   if (o === "All of the above") setSelected(event.target.checked ? [o] : []);
-                  else setSelected((items) => event.target.checked ? [...items, o] : items.filter((item) => item !== o));
-                }} /> {o}
+                  else
+                    setSelected((items) =>
+                      event.target.checked ? [...items, o] : items.filter((item) => item !== o)
+                    );
+                }}
+              />{" "}
+              {o}
             </label>
-          )}
+          ))}
         </div>
         {errText("automations")}
       </div>
-      <label className="f">Additional details<textarea name="notes" rows={3} placeholder="Which LIMS do you use? Roughly how many enquiries a week?" /></label>
-      <button className="btn" type="submit" disabled={busy}>{busy ? "Sending…" : "Request a pilot →"}</button>
-      <p className={`formmsg ${msg.kind}`} role="status">{msg.text}</p>
-      <p className="tiny">We use these details only to reply about a pilot. See our <a href="/privacy">privacy note</a>.</p>
+      <label className="f">
+        Additional details
+        <textarea
+          name="notes"
+          rows={3}
+          placeholder="Which systems do you use today, and where does your team lose the most time?"
+        />
+      </label>
+      <button className="btn solid" type="submit" disabled={busy}>
+        {busy ? "Sending…" : "Send message →"}
+      </button>
+      <p className={`formmsg ${msg.kind}`} role="status">
+        {msg.text}
+      </p>
+      <p className="tiny">
+        We use these details only to reply to your enquiry. See our <a href="/privacy">privacy note</a>.
+      </p>
     </form>
   );
 }

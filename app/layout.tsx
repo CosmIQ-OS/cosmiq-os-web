@@ -1,13 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import MobileMenu from "@/components/MobileMenu";
+import RotatingCube from "@/components/RotatingCube";
 import ThemeToggle from "@/components/ThemeToggle";
 import { NAV, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: { default: `${SITE_NAME} — WhatsApp enquiry to quotation for food & testing labs`, template: `%s · ${SITE_NAME}` },
+  title: {
+    default: `${SITE_NAME} — Safe AI Automation & Custom Agents for Business`,
+    template: `%s · ${SITE_NAME}`,
+  },
   description: SITE_DESCRIPTION,
   openGraph: { type: "website", siteName: SITE_NAME, locale: "en_IN", url: "/" },
   twitter: { card: "summary_large_image" },
@@ -57,26 +61,7 @@ try {
         <header className="nav" aria-label="Main">
           <div className="nav-in">
             <Link className="wordmark" href="/" aria-label="CosmIQ OS">
-              <svg className="wordmark-cube" viewBox="0 0 200 200" width="28" height="28" aria-hidden="true">
-                <polygon
-                  points="34.53,58.00 100.00,20.20 142.56,44.77 127.89,53.24 100.00,37.13 63.86,58.00 100.00,78.87 127.89,62.76 142.56,71.23 100.00,95.80"
-                  fill="currentColor"
-                />
-                <polygon
-                  points="103.93,58.00 117.02,50.44 152.38,50.44 165.48,58.00 152.38,65.56 117.02,65.56"
-                  fill="var(--accent-primary)"
-                />
-                <polygon
-                  points="96.36,102.10 30.89,64.30 30.89,139.90 96.36,177.70 96.36,154.26 81.70,145.80 81.70,152.30 45.55,131.43 45.55,89.70 81.70,110.57 81.70,117.07 96.36,125.54"
-                  fill="currentColor"
-                  fillOpacity="0.86"
-                />
-                <polygon
-                  points="103.64,102.10 169.11,64.30 169.11,81.23 143.71,95.90 143.71,137.63 169.11,122.97 169.11,139.90 103.64,177.70 103.64,160.77 129.04,146.10 129.04,104.37 103.64,119.03"
-                  fill="currentColor"
-                  fillOpacity="0.68"
-                />
-              </svg>
+              <RotatingCube className="wordmark-cube" size={28} speed={0.55} />
               <span className="wordmark-text">
                 CosmIQ<sup className="wordmark-os">OS</sup>
               </span>
@@ -91,7 +76,7 @@ try {
             <div className="nav-end">
               <ThemeToggle />
               <Link href="/contact" className="btn btn-sm nav-cta">
-                <span className="long">Request a pilot →</span>
+                <span className="long">Contact us →</span>
                 <span className="short">Contact</span>
               </Link>
               <MobileMenu links={NAV} />
@@ -103,25 +88,19 @@ try {
 
         <footer>
           <div className="wrap foot-row">
-            <span>CosmIQ Agentic Automation for food &amp; testing labs. Deterministic LIMS sync.</span>
+            <span>CosmIQ OS · Cut the noise. Craft the core. Claim the growth.</span>
             <ul>
               <li>
-                <Link href="/#agents">Agents</Link>
+                <Link href="/#vision">Vision</Link>
               </li>
               <li>
-                <Link href="/#workflow">Workflow</Link>
+                <Link href="/services">Services</Link>
               </li>
               <li>
                 <Link href="/demo">Demo</Link>
               </li>
               <li>
-                <Link href="/#guardrails">Guardrails</Link>
-              </li>
-              <li>
-                <Link href="/contact">Request pilot</Link>
-              </li>
-              <li>
-                <Link href="/styleguide">Design System</Link>
+                <Link href="/contact">Contact us</Link>
               </li>
               <li>
                 <Link href="/privacy">Privacy</Link>

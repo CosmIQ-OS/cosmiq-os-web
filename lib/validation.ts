@@ -1,9 +1,10 @@
 export const AUTOMATION_OPTIONS = [
-  "WhatsApp enquiries",
-  "Quotations",
-  "Customer marketing",
-  "LIMS order entry",
-  "Sample status updates",
+  "Workflow & operations automation",
+  "Customer support (WhatsApp / web / email)",
+  "Custom AI agents",
+  "Business systems integration (CRM / ERP / LIMS)",
+  "Quotations & back-office documents",
+  "Consulting / pilot planning",
   "All of the above",
 ] as const;
 
@@ -26,13 +27,16 @@ export interface Enquiry extends EnquiryInput {
   source: string;
 }
 
-export const EMAIL_RE =/^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+export const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 export function validateEnquiry(body: unknown): { ok: true; value: EnquiryInput } | { ok: false; error: string } {
   if (!body || typeof body !== "object") return { ok: false, error: "Invalid payload." };
   const b = body as Record<string, unknown>;
-  if (["name", "role", "domain", "email", "phone", "notes"].some((field) =>
-    b[field] !== undefined && typeof b[field] !== "string")) {
+  if (
+    ["name", "role", "domain", "email", "phone", "notes"].some(
+      (field) => b[field] !== undefined && typeof b[field] !== "string"
+    )
+  ) {
     return { ok: false, error: "Fields must be text." };
   }
   const name = String(b.name ?? "").trim();
@@ -42,7 +46,12 @@ export function validateEnquiry(body: unknown): { ok: true; value: EnquiryInput 
   const phone = String(b.phone ?? "").trim().slice(0, 40);
   const notes = String(b.notes ?? "").trim().slice(0, 2000);
   const raw = Array.isArray(b.automations) ? b.automations : [];
-  if (raw.some((option) => typeof option !== "string" || !(AUTOMATION_OPTIONS as readonly string[]).includes(option))) {
+  if (
+    raw.some(
+      (option) =>
+        typeof option !== "string" || !(AUTOMATION_OPTIONS as readonly string[]).includes(option)
+    )
+  ) {
     return { ok: false, error: "Invalid automation selection." };
   }
   const automations = [...new Set(raw as string[])];
@@ -54,8 +63,8 @@ export function validateEnquiry(body: unknown): { ok: true; value: EnquiryInput 
   if (name.length > 160 || domain.length > 160 || email.length > 254) {
     return { ok: false, error: "A field is too long." };
   }
-  if (!domain) return { ok: false, error: "Lab / organisation is required." };
+  if (!domain) return { ok: false, error: "Company / organisation is required." };
   if (!EMAIL_RE.test(email)) return { ok: false, error: "A valid Email ID is required." };
-  if (expanded.length === 0) return { ok: false, error: "Pick at least one automation." };
+  if (expanded.length === 0) return { ok: false, error: "Pick at least one area." };
   return { ok: true, value: { name, role, domain, email, phone, automations: expanded, notes } };
 }
