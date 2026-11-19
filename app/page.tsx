@@ -1,11 +1,11 @@
 import Link from "next/link";
-import RotatingCube from "@/components/RotatingCube";
+import GrowthDiagram from "@/components/GrowthDiagram";
 import { SECURITY_PILLARS, VISION_BOUNDARY } from "@/lib/services";
 
 export default function Home() {
   return (
     <>
-      {/* Block 1: Above-the-Fold Hero — Eye-Zone Diagram + Thumb-Zone Copy & Buttons + Proof Ledger */}
+      {/* Block 1: Above-the-Fold Hero — Visual Equation Diagram + Copy & Thumb-Zone Buttons */}
       <section className="min-hero" id="top" aria-labelledby="heroTitle">
         <div className="wrap min-hero-wrap">
           <div className="min-hero-grid">
@@ -36,48 +36,8 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="min-hero-cube" aria-label="Animated 3D CosmIQ OS Human and AI Operating Diagram">
-              <div className="min-engine-panel">
-                <div className="min-engine-head">
-                  <span>COSMIQ OPERATING BOUNDARY</span>
-                  <span className="min-engine-live">
-                    <span className="trust-dot" aria-hidden="true" />
-                    SAFE BY DESIGN
-                  </span>
-                </div>
-
-                <div className="min-engine-body">
-                  <div className="min-engine-side">
-                    <span className="min-engine-kicker">AI HANDLES</span>
-                    <strong>Cut the noise</strong>
-                    <ul>
-                      <li>24/7 customer replies</li>
-                      <li>System record lookup</li>
-                      <li>Draft quotes &amp; docs</li>
-                    </ul>
-                  </div>
-
-                  <div className="min-engine-core">
-                    <RotatingCube className="min-cube-svg" size={168} speed={0.48} />
-                    <span className="min-engine-core-tag">C·Q·I GUARDRAILS</span>
-                  </div>
-
-                  <div className="min-engine-side min-engine-side-human">
-                    <span className="min-engine-kicker min-engine-kicker-accent">HUMAN OWNS</span>
-                    <strong>Craft the core</strong>
-                    <ul>
-                      <li>1-tap staff approval</li>
-                      <li>Customer relationships</li>
-                      <li>Judgment &amp; exceptions</li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="min-engine-foot">
-                  <span>INPUT: WhatsApp · Web · Email · CRM / ERP / LIMS</span>
-                  <span>OUTPUT: Verified &amp; Logged</span>
-                </div>
-              </div>
+            <div className="min-hero-cube">
+              <GrowthDiagram />
             </div>
           </div>
 
