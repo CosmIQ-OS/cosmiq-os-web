@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import WhatsAppIcon from "@/components/WhatsAppIcon";
 
 export const metadata: Metadata = {
   title: "Demo: WhatsApp enquiry to quotation",
@@ -54,19 +53,7 @@ export default function Demo() {
                 <p style={{ display: "flex", gap: 12, alignItems: "center" }}><span className="tag hi">On approval</span>Quotation PDF submitted by email</p>
               </div>
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-              <a className="btn" href="/contact">Request the live pilot demo →</a>
-              <a
-                className="btn ghost"
-                href="https://wa.me/919847594827"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
-              >
-                <WhatsAppIcon size={16} />
-                <span>Chat on WhatsApp: +91 98475 94827</span>
-              </a>
-            </div>
+            <div><a className="btn" href="/contact">Request the live pilot demo →</a></div>
           </div>
         </div>
       </section>
