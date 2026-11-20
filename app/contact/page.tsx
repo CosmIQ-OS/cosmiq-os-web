@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import LeadForm from "@/components/LeadForm";
+import WhatsAppIcon from "@/components/WhatsAppIcon";
 
 export const metadata: Metadata = {
   title: "Contact us",
@@ -28,7 +29,23 @@ export default function Contact() {
           </ol>
 
           <div className="contact-links">
-            <span className="contact-links-label">Also available</span>
+            <span className="contact-links-label">Direct WhatsApp</span>
+            <div className="contact-links-row">
+              <a
+                href="https://wa.me/919847594827"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn solid btn-sm"
+                style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
+              >
+                <WhatsAppIcon size={16} />
+                <span>Chat on WhatsApp: +91 98475 94827 →</span>
+              </a>
+            </div>
+
+            <span className="contact-links-label" style={{ marginTop: 8 }}>
+              Also available
+            </span>
             <div className="contact-links-row">
               <Link href="/services" className="btn btn-sm">
                 View our services

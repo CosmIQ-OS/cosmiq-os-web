@@ -3,6 +3,8 @@ import Link from "next/link";
 import MobileMenu from "@/components/MobileMenu";
 import RotatingCube from "@/components/RotatingCube";
 import ThemeToggle from "@/components/ThemeToggle";
+import WhatsAppFloatingWidget from "@/components/WhatsAppFloatingWidget";
+import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { NAV, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -75,6 +77,17 @@ try {
             </nav>
             <div className="nav-end">
               <ThemeToggle />
+              <a
+                href="https://wa.me/919847594827"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="nav-whatsapp"
+                aria-label="Direct WhatsApp chat: +91 98475 94827"
+                title="Direct WhatsApp chat: +91 98475 94827"
+              >
+                <WhatsAppIcon size={15} className="whatsapp-nav-icon" />
+                <span className="nav-whatsapp-num">+91 98475 94827</span>
+              </a>
               <Link href="/contact" className="btn btn-sm nav-cta">
                 <span className="long">Contact us →</span>
                 <span className="short">Contact</span>
@@ -103,11 +116,24 @@ try {
                 <Link href="/contact">Contact us</Link>
               </li>
               <li>
+                <a
+                  href="https://wa.me/919847594827"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Chat with CosmIQ OS on WhatsApp"
+                  style={{ color: "var(--accent-primary, #ff5a1f)", fontWeight: 600 }}
+                >
+                  WhatsApp: +91 98475 94827
+                </a>
+              </li>
+              <li>
                 <Link href="/privacy">Privacy</Link>
               </li>
             </ul>
           </div>
         </footer>
+
+        <WhatsAppFloatingWidget />
       </body>
     </html>
   );

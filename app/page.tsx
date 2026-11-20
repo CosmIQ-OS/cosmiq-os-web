@@ -1,5 +1,6 @@
 import Link from "next/link";
 import GrowthDiagram from "@/components/GrowthDiagram";
+import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { SECURITY_PILLARS, VISION_BOUNDARY } from "@/lib/services";
 
 export default function Home() {
@@ -33,6 +34,17 @@ export default function Home() {
                 <Link className="btn" href="/contact">
                   Contact us
                 </Link>
+                <a
+                  className="btn ghost"
+                  href="https://wa.me/919847594827"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Chat with CosmIQ OS on WhatsApp"
+                  style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
+                >
+                  <WhatsAppIcon size={16} />
+                  <span>WhatsApp: +91 98475 94827</span>
+                </a>
               </div>
             </div>
 
@@ -136,6 +148,17 @@ export default function Home() {
             <Link className="btn" href="/contact">
               Contact us
             </Link>
+            <a
+              className="btn ghost"
+              href="https://wa.me/919847594827"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Chat with CosmIQ OS on WhatsApp"
+              style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
+            >
+              <WhatsAppIcon size={16} />
+              <span>WhatsApp: +91 98475 94827</span>
+            </a>
           </div>
         </div>
       </section>

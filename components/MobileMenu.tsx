@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
+import WhatsAppIcon from "./WhatsAppIcon";
 
 // <details> keeps the menu working without JS; this only closes it after a link
 // tap, an outside tap or Escape, so it never sits on top of the page.
@@ -35,6 +36,15 @@ export default function MobileMenu({ links }: { links: { href: string; label: st
       <nav aria-label="Mobile" onClick={closeOnLink}>
         {links.map((l) => <a key={l.href} href={l.href}>{l.label}</a>)}
         <a href="/contact">Request a pilot</a>
+        <a
+          href="https://wa.me/919847594827"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--accent-primary, #ff5a1f)", fontWeight: 600 }}
+        >
+          <WhatsAppIcon size={16} />
+          <span>WhatsApp: +91 98475 94827</span>
+        </a>
       </nav>
     </details>
   );
