@@ -59,21 +59,41 @@ export async function POST(req: NextRequest) {
   }
   const v = validateEnquiry(body);
   if (!v.ok) return NextResponse.json({ error: v.error }, { status: 400 });
+
+  let localId: string | null = null;
+  let saveError: unknown = null;
   try {
     const row = await saveEnquiry(v.value);
-    const engineLead = await forwardToCustomerEngine(v.value);
+    localId = row.id;
+  } catch (err) {
+    saveError = err;
+    console.warn("[enquiries] Local store / database save skipped or failed:", err);
+  }
+
+  // Forward lead directly to Customer Service AI Engine
+  let engineLead: { sessionId?: string; intakeId?: number } | null = null;
+  try {
+    engineLead = await forwardToCustomerEngine(v.value);
+  } catch (err) {
+    console.warn("[enquiries] Engine forwarding error:", err);
+  }
+
+  // If either the engine or the local store accepted the lead, report success!
+  if (localId || engineLead?.sessionId || engineLead?.intakeId) {
+    const refId = localId || engineLead?.sessionId || `lead-${Date.now().toString(36)}`;
     return NextResponse.json(
       {
         ok: true,
-        id: row.id,
+        id: refId,
         sessionId: engineLead?.sessionId ?? null,
         intakeId: engineLead?.intakeId ?? null,
       },
       { status: 201 }
     );
-  } catch {
-    return NextResponse.json({ error: "Could not save. Please try again." }, { status: 500 });
   }
+
+  console.error("[enquiries] Both local save and engine forward failed:", { saveError });
+  return NextResponse.json({ error: "Could not save. Please try again." }, { status: 500 });
 }
 
 export async function GET(req: NextRequest) {
